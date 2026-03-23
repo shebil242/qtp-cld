@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -636,10 +636,10 @@ body.dark .audit-item { background: rgba(255,255,255,.04); }
           Rating · Current Gate
         </p>
         <div class="dash-rag-row" id="dashRagRow">
-          <div class="dash-rag-item"><span class="dash-rag-num dash-rag-green" id="dashGreenCount">0</span><span class="dash-rag-lbl dash-rag-green">Green</span></div>
-          <div class="dash-rag-item"><span class="dash-rag-num dash-rag-yellow" id="dashYellowCount">0</span><span class="dash-rag-lbl dash-rag-yellow">Yellow</span></div>
-          <div class="dash-rag-item"><span class="dash-rag-num dash-rag-red" id="dashRedCount">0</span><span class="dash-rag-lbl dash-rag-red">Red</span></div>
-          <div class="dash-rag-item"><span class="dash-rag-num dash-rag-gray" id="dashNaCount">0</span><span class="dash-rag-lbl dash-rag-gray">N/A</span></div>
+          <div class="dash-rag-item" onclick="applyRagFilter(currentGateValue,'green')" style="cursor:pointer;" title="Show Green tasks"><span class="dash-rag-num dash-rag-green" id="dashGreenCount">0</span><span class="dash-rag-lbl dash-rag-green">Green</span></div>
+          <div class="dash-rag-item" onclick="applyRagFilter(currentGateValue,'yellow')" style="cursor:pointer;" title="Show Yellow tasks"><span class="dash-rag-num dash-rag-yellow" id="dashYellowCount">0</span><span class="dash-rag-lbl dash-rag-yellow">Yellow</span></div>
+          <div class="dash-rag-item" onclick="applyRagFilter(currentGateValue,'red')" style="cursor:pointer;" title="Show Red tasks"><span class="dash-rag-num dash-rag-red" id="dashRedCount">0</span><span class="dash-rag-lbl dash-rag-red">Red</span></div>
+          <div class="dash-rag-item" onclick="applyRagFilter(currentGateValue,'na')" style="cursor:pointer;" title="Show N/A tasks"><span class="dash-rag-num dash-rag-gray" id="dashNaCount">0</span><span class="dash-rag-lbl dash-rag-gray">N/A</span></div>
         </div>
         <p class="dash-card-hint">Click to see all gates →</p>
         <div class="dash-breakdown" id="ragBreakdown"></div>
@@ -676,7 +676,7 @@ body.dark .audit-item { background: rgba(255,255,255,.04); }
           Deviations
         </p>
         <div class="dash-card-main">
-          <span class="dash-dev-num" id="dashDevCount">0</span>
+          <span class="dash-dev-num" id="dashDevCount" onclick="applyRagFilter(currentGateValue,'na')" style="cursor:pointer;text-decoration:underline dotted;" title="Click to show N/A tasks">0</span>
         </div>
         <p class="dash-dev-lbl">tasks deviated in current gate</p>
         <p class="dash-card-hint">Click to see all gates →</p>
@@ -763,6 +763,7 @@ const gateOrder = ["PCI","FeG","CSG","CG","DG","FDG","FIG","RG","EG"];
 
 // ===== CURRENT USER =====
 let currentUser = "";
+let activeFilter = null; // { gate, type } where type = 'green','yellow','red','na'
 
 function doLogin() {
   const sel = document.getElementById("loginUserSelect");
@@ -859,6 +860,38 @@ function closeDashboard() {
   });
 }
 
+function applyRagFilter(gate, type) {
+  document.getElementById("gateSelect").value = gate;
+  onGateChange();
+  activeFilter = { gate, type };
+  renderTable();
+  renderFilterBadge();
+  closeDashboard();
+  setTimeout(() => document.querySelector('.table-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+}
+
+function clearRagFilter() {
+  activeFilter = null;
+  renderTable();
+  renderFilterBadge();
+}
+
+function renderFilterBadge() {
+  let badge = document.getElementById("ragFilterBadge");
+  if (!activeFilter) { if (badge) badge.remove(); return; }
+  if (!badge) {
+    badge = document.createElement("div");
+    badge.id = "ragFilterBadge";
+    badge.style.cssText = "display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 14px;background:var(--accent-light);border:1px solid var(--accent);border-radius:8px;font-size:12px;font-weight:600;color:var(--accent);";
+    const tableWrap = document.querySelector('.table-wrap');
+    tableWrap.parentNode.insertBefore(badge, tableWrap);
+  }
+  const colorMap = { green:'#12b76a', yellow:'#f79009', red:'#f04438', na:'#98a2b3' };
+  badge.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${colorMap[activeFilter.type]};display:inline-block;"></span>
+    Filtered: <b>${activeFilter.type.toUpperCase()}</b> tasks · gate <b>${activeFilter.gate}</b>
+    <button onclick="clearRagFilter()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--accent);font-size:12px;font-weight:700;font-family:inherit;">✕ Clear</button>`;
+}
+
 function toggleDashBreakdown(id) {
   const el = document.getElementById(id);
   el.classList.toggle("open");
@@ -949,11 +982,11 @@ function computeBreakdown(id) {
       const isCur = g === currentGateValue;
       html += `<div class="dash-gate-row">
         <span class="dash-gate-tag${isCur?' current':''}">${g}</span>
-        <div style="flex:1;display:flex;gap:4px;align-items:center;">
-          <div style="flex:${g_};background:var(--success);height:8px;border-radius:3px;min-width:${g_?4:0}px;" title="${g_} Green"></div>
-          <div style="flex:${y_};background:var(--warning);height:8px;border-radius:3px;min-width:${y_?4:0}px;" title="${y_} Yellow"></div>
-          <div style="flex:${r_};background:var(--error);height:8px;border-radius:3px;min-width:${r_?4:0}px;" title="${r_} Red"></div>
-          <div style="flex:${na_};background:var(--text-muted);height:8px;border-radius:3px;min-width:${na_?4:0}px;" title="${na_} N/A"></div>
+        <div style="flex:1;display:flex;gap:3px;align-items:center;">
+          ${g_  ? `<div onclick="applyRagFilter('${g}','green')"  title="${g_} Green — click to filter"  style="flex:${g_};background:var(--success);height:8px;border-radius:3px;cursor:pointer;transition:opacity .15s;" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'"></div>` : ''}
+          ${y_  ? `<div onclick="applyRagFilter('${g}','yellow')" title="${y_} Yellow — click to filter" style="flex:${y_};background:var(--warning);height:8px;border-radius:3px;cursor:pointer;transition:opacity .15s;" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'"></div>` : ''}
+          ${r_  ? `<div onclick="applyRagFilter('${g}','red')"    title="${r_} Red — click to filter"    style="flex:${r_};background:var(--error);height:8px;border-radius:3px;cursor:pointer;transition:opacity .15s;" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'"></div>` : ''}
+          ${na_ ? `<div onclick="applyRagFilter('${g}','na')"     title="${na_} N/A — click to filter"  style="flex:${na_};background:var(--text-muted);height:8px;border-radius:3px;cursor:pointer;transition:opacity .15s;" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'"></div>` : ''}
         </div>
         <span class="dash-pct-lbl" style="font-size:10px;color:var(--text-muted);">G:${g_} Y:${y_} R:${r_}</span>
       </div>`;
@@ -990,10 +1023,10 @@ function computeBreakdown(id) {
       }));
       if (!count) return;
       const isCur = g === currentGateValue;
-      html += `<div class="dash-gate-row">
+      html += `<div class="dash-gate-row" onclick="applyRagFilter('${g}','na')" style="cursor:pointer;" title="Click to show N/A tasks for ${g}">
         <span class="dash-gate-tag${isCur?' current':''}">${g}</span>
         <span style="font-size:13px;font-weight:700;color:var(--error);">${count}</span>
-        <span style="font-size:11px;color:var(--text-muted);">deviation${count>1?'s':''}</span>
+        <span style="font-size:11px;color:var(--text-muted);">deviation${count>1?'s':''} — click to filter</span>
       </div>`;
     });
     el.innerHTML = html || '<p style="font-size:12px;color:var(--text-muted);">No deviations recorded.</p>';
@@ -1124,7 +1157,8 @@ function closeAdvanceGateModal() {
 }
 
 function onGateChange() {
-  // Only changes the VIEW — does NOT affect project progress (blue state)
+  activeFilter = null;
+  renderFilterBadge();
   buildGateTimeline();
   loadTaskData();
   autoFillFromCriteria();
@@ -1768,6 +1802,17 @@ function renderTable() {
       // Show the row for the currently selected gate
       const gd = t.gates?.[gate] || {};
       const hasFilled = gd.expected_status || gd.actual_status || gd.rating;
+
+      // RAG/NA filter from dashboard
+      if (activeFilter) {
+        const r_ = (gd.rating || "").toLowerCase();
+        const a_ = (gd.actual_status || "").toLowerCase();
+        const isNa = a_ === "n/a" || r_ === "n/a";
+        if (activeFilter.type === 'green'  && r_ !== 'green') return;
+        if (activeFilter.type === 'yellow' && r_ !== 'yellow') return;
+        if (activeFilter.type === 'red'    && r_ !== 'red') return;
+        if (activeFilter.type === 'na'     && !isNa) return;
+      }
 
       let r = taskTable.insertRow();
       r.style.cursor = 'pointer';
