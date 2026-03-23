@@ -67,11 +67,30 @@ class DeleteTask(BaseModel):
 
 class EngineerName(BaseModel):
     name: str
+    email: Optional[str] = ""
 
 
 class AdvanceGate(BaseModel):
     project_id: str
     new_gate: str
+
+
+# ---- Engineer helpers ----
+def _eng_name(e):
+    return e["name"] if isinstance(e, dict) else e
+
+def _eng_email(e):
+    return e.get("email", "") if isinstance(e, dict) else ""
+
+def _find_eng(engineers, name):
+    for e in engineers:
+        if _eng_name(e) == name:
+            return e
+    return None
+
+def _migrate_engineers(engineers):
+    """Migrate plain strings to objects if needed."""
+    return [{"name": e, "email": ""} if isinstance(e, str) else e for e in engineers]
 
 
 # ---------- SAVE TASK ----------
@@ -181,14 +200,34 @@ def delete_task(req: DeleteTask):
 @app.get("/engineers")
 def get_engineers():
     db = read_db()
-    return {"engineers": sorted(db.get("engineers", []))}
+    engineers = _migrate_engineers(db.get("engineers", []))
+    db["engineers"] = engineers
+    write_db(db)
+    return {"engineers": sorted(engineers, key=lambda e: _eng_name(e).lower())}
 
 
 @app.post("/save-engineer")
 def save_engineer(eng: EngineerName):
     db = read_db()
-    if eng.name not in db["engineers"]:
-        db["engineers"].append(eng.name)
+    db["engineers"] = _migrate_engineers(db.get("engineers", []))
+    existing = _find_eng(db["engineers"], eng.name)
+    if existing:
+        # Update email if provided and not already set
+        if eng.email and not existing.get("email"):
+            existing["email"] = eng.email
+    else:
+        db["engineers"].append({"name": eng.name, "email": eng.email or ""})
+    write_db(db)
+    return {"status": "saved"}
+
+
+@app.post("/update-engineer-email")
+def update_engineer_email(eng: EngineerName):
+    db = read_db()
+    db["engineers"] = _migrate_engineers(db.get("engineers", []))
+    existing = _find_eng(db["engineers"], eng.name)
+    if existing and eng.email:
+        existing["email"] = eng.email
         write_db(db)
     return {"status": "saved"}
 
@@ -311,17 +350,19 @@ async def upload_qtp(file: UploadFile = File(...)):
         db["project_gates"][project_id] = current_gate
 
         # Collect engineers
-        all_engineers = set(db.get("engineers", []))
+        db["engineers"] = _migrate_engineers(db.get("engineers", []))
+        existing_names = {_eng_name(e) for e in db["engineers"]}
         for t in parsed_tasks:
             for name in re.split(r"[,\n]", t["responsible_engineer"]):
                 name = name.strip()
-                if name:
-                    all_engineers.add(name)
+                if name and name not in existing_names:
+                    db["engineers"].append({"name": name, "email": ""})
+                    existing_names.add(name)
             for name in re.split(r"[,\n]", t["quality_engineer"]):
                 name = name.strip()
-                if name:
-                    all_engineers.add(name)
-        db["engineers"] = list(all_engineers)
+                if name and name not in existing_names:
+                    db["engineers"].append({"name": name, "email": ""})
+                    existing_names.add(name)
 
         inserted = 0
         for t in parsed_tasks:
@@ -395,5 +436,83 @@ async def upload_qtp(file: UploadFile = File(...)):
         return {"status": "error", "detail": str(e)}
 
 
+# ---------- ALL PROJECTS (landing page) ----------
+@app.get("/all-projects")
+def all_projects():
+    db = read_db()
+    tasks = db["tasks"]
+    project_gates = db["project_gates"]
+    projects = {}
+    for t in tasks:
+        pid = t["project_id"]
+        if pid not in projects:
+            projects[pid] = {"project_id": pid, "tasks": []}
+        projects[pid]["tasks"].append(t)
+
+    result = []
+    for pid, p in projects.items():
+        current_gate = project_gates.get(pid, "PCI")
+        gate_tasks = [t for t in p["tasks"] if t["gate"] == current_gate]
+        unique_tasks = {t["quality_task"] for t in p["tasks"]}
+        total = len(unique_tasks)
+
+        green = yellow = red = deviated = completed = 0
+        for t in gate_tasks:
+            r = t.get("rating", "")
+            a = t.get("actual_status", "")
+            if r == "Green": green += 1
+            elif r == "Yellow": yellow += 1
+            elif r == "Red": red += 1
+            if r not in ("Green", "Yellow", "Red") and (r or a or t.get("expected_status", "")):
+                deviated += 1
+            if a.lower() == "completed":
+                completed += 1
+
+        pct = round(completed / total * 100) if total else 0
+        result.append({
+            "project_id": pid,
+            "current_gate": current_gate,
+            "total_tasks": total,
+            "completed": completed,
+            "completion_pct": pct,
+            "green": green, "yellow": yellow, "red": red,
+            "deviations": deviated
+        })
+
+    return {"projects": sorted(result, key=lambda x: x["project_id"])}
+
+
+# ---------- OVERDUE TASKS ----------
+@app.get("/overdue-tasks")
+def overdue_tasks():
+    from datetime import date
+    db = read_db()
+    engineers = {_eng_name(e): _eng_email(e) for e in _migrate_engineers(db.get("engineers", []))}
+    today = date.today().isoformat()
+    overdue = []
+    seen = set()
+    for t in db["tasks"]:
+        end = t.get("planned_end", "")
+        status = (t.get("actual_status", "") or "").lower()
+        if not end or status == "completed": continue
+        if end < today:
+            key = (t["project_id"], t["item"], t["quality_task"], t["gate"])
+            if key in seen: continue
+            seen.add(key)
+            resp = t.get("responsible_engineer", "")
+            qe = t.get("quality_engineer", "")
+            overdue.append({
+                "project_id": t["project_id"], "item": t["item"],
+                "task": t["quality_task"], "gate": t["gate"],
+                "planned_end": end, "actual_status": t.get("actual_status", ""),
+                "responsible_engineer": resp,
+                "responsible_email": engineers.get(resp, ""),
+                "quality_engineer": qe,
+                "quality_email": engineers.get(qe, "")
+            })
+    return {"overdue": overdue}
+
+
 # ---------- SERVE FRONTEND ----------
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
