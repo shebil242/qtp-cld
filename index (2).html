@@ -1,0 +1,1963 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volvo TTI - Quality Task Plan v8</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f2f4f8; --surface: #ffffff; --surface-elevated: #ffffff;
+  --border: #e4e7ec; --border-light: #f0f2f5;
+  --text-primary: #101828; --text-secondary: #475467; --text-tertiary: #98a2b3; --text-muted: #b0b8c9;
+  --accent: #1b4f9b; --accent-light: #e8edf6; --accent-hover: #163f7e; --accent-glow: rgba(27,79,155,.12);
+  --volvo-blue: #003057; --volvo-steel: #4a6fa5;
+  --success: #12b76a; --success-bg: #ecfdf3;
+  --warning: #f79009; --warning-bg: #fffaeb;
+  --error: #f04438; --error-bg: #fef3f2;
+  --shadow-xs: 0 1px 2px rgba(16,24,40,.05);
+  --shadow-sm: 0 1px 3px rgba(16,24,40,.1), 0 1px 2px rgba(16,24,40,.06);
+  --shadow-md: 0 4px 8px -2px rgba(16,24,40,.1), 0 2px 4px -2px rgba(16,24,40,.06);
+  --shadow-lg: 0 12px 16px -4px rgba(16,24,40,.08), 0 4px 6px -2px rgba(16,24,40,.03);
+  --shadow-xl: 0 20px 24px -4px rgba(16,24,40,.08), 0 8px 8px -4px rgba(16,24,40,.03);
+  --radius: 16px; --radius-sm: 10px; --radius-xs: 6px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg); color: var(--text-primary); font-size: 14px; line-height: 1.6;
+  min-height: 100vh; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== TOPBAR ===== */
+.topbar {
+  background: linear-gradient(135deg, rgba(0,48,87,.92) 0%, rgba(10,37,64,.95) 100%);
+  backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,.15), 0 4px 20px rgba(0,0,0,.12);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.topbar-logo { display: flex; align-items: center; gap: 14px; }
+.topbar-logo .logo-divider { width: 1px; height: 28px; background: rgba(255,255,255,.2); }
+.topbar-logo .logo-text { color: rgba(255,255,255,.95); font-size: 14px; font-weight: 600; letter-spacing: .04em; }
+.topbar-quote { color: rgba(255,255,255,.5); font-size: 12px; font-style: italic; letter-spacing: .01em; }
+.topbar-badge { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 20px; padding: 5px 14px; color: rgba(255,255,255,.8); font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
+.topbar-controls { display: flex; align-items: center; gap: 10px; }
+.btn-upload-qtp { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background .15s; }
+.btn-upload-qtp:hover { background: rgba(255,255,255,.25); }
+
+/* ===== PAGE ===== */
+.page-wrap { max-width: 1440px; margin: 0 auto; padding: 28px 32px 64px; }
+.page-header { text-align: center; margin-bottom: 32px; }
+.page-header h1 { font-family: 'Inter', sans-serif; font-size: 28px; font-weight: 700; color: var(--text-primary); letter-spacing: -.3px; margin-bottom: 4px; }
+.page-header p { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: var(--text-tertiary); }
+
+/* ===== GATE TIMELINE ===== */
+.gate-timeline { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 32px; padding: 0 40px; }
+.gate-node { display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; z-index: 1; }
+.gate-dot {
+  width: 34px; height: 34px; border-radius: 50%; background: var(--surface); border: 2.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 8.5px; font-weight: 700;
+  color: var(--text-tertiary); transition: all .2s ease; letter-spacing: .03em;
+}
+.gate-node.active .gate-dot { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); transform: scale(1.12); }
+.gate-node.completed .gate-dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+.gate-node.completed.active .gate-dot { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 4px var(--accent-glow); transform: scale(1.12); }
+.gate-node.deviated .gate-dot { background: var(--error); border-color: var(--error); color: #fff; }
+.gate-node.deviated.active .gate-dot { background: var(--error); border-color: var(--error); color: #fff; box-shadow: 0 0 0 4px rgba(240,68,56,.15); transform: scale(1.12); }
+.gate-node:hover .gate-dot { border-color: var(--accent); color: var(--accent); }
+.gate-node.completed:hover .gate-dot, .gate-node.completed.active:hover .gate-dot { color: #fff; }
+.gate-node.deviated:hover .gate-dot { color: #fff; border-color: var(--error); }
+.gate-line { flex: 1; height: 2px; background: var(--border); min-width: 20px; }
+.gate-line.completed { background: var(--accent); }
+
+/* ===== CARDS ===== */
+.card { background: rgba(255,255,255,.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: var(--radius); box-shadow: 0 2px 8px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.08); border: 1px solid rgba(255,255,255,.45); padding: 24px 28px; margin-bottom: 20px; animation: cardIn .55s cubic-bezier(.22,1,.36,1) both; }
+.card:nth-child(2) { animation-delay: .08s; }
+.card:nth-child(3) { animation-delay: .16s; }
+@keyframes cardIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+.section-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 8px; }
+.section-label .icon { width: 18px; height: 18px; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
+.section-label .icon.blue { background: var(--accent-light); color: var(--accent); }
+.section-label .icon.green { background: var(--success-bg); color: var(--success); }
+
+/* ===== FORM ELEMENTS ===== */
+.field-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: .02em; }
+input[type="text"], input[type="date"], input[type="week"], select, textarea {
+  width: 100%; background: #f9fafb; border: 1px solid var(--border); border-radius: var(--radius-xs);
+  padding: 9px 12px; font-family: inherit; font-size: 13px; color: var(--text-primary); outline: none;
+  transition: all .15s ease; appearance: none; -webkit-appearance: none;
+}
+input[type="text"]:hover, input[type="date"]:hover, input[type="week"]:hover, select:hover, textarea:hover { border-color: #c4cad5; }
+input[type="text"]:focus, input[type="date"]:focus, input[type="week"]:focus, select:focus, textarea:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow-xs); }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2398a2b3' d='M5 7L1 3h8z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer; }
+textarea { resize: vertical; min-height: 76px; line-height: 1.6; }
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+.context-bar { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 14px; align-items: end; }
+.context-bar > .field-group { min-width: 0; }
+
+.form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 20px; }
+.form-grid-top { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 20px; margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--border-light); }
+@media (max-width: 900px) { .form-grid { grid-template-columns: repeat(2, 1fr); } .form-grid-top { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .form-grid-top { grid-template-columns: 1fr; } .context-bar { grid-template-columns: 1fr; } }
+
+/* ===== BUTTONS ===== */
+.btn-primary { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #1b4f9b 0%, #4338ca 100%); color: #fff; border: none; border-radius: var(--radius-xs); padding: 9px 18px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s ease; box-shadow: 0 1px 3px rgba(27,79,155,.3), 0 4px 12px rgba(67,56,202,.15); }
+.btn-primary:hover { background: linear-gradient(135deg, #163f7e 0%, #3730a3 100%); box-shadow: 0 2px 6px rgba(27,79,155,.35), 0 8px 20px rgba(67,56,202,.2); transform: translateY(-2px); }
+.btn-primary:active { transform: translateY(0); box-shadow: 0 1px 2px rgba(27,79,155,.3); }
+.btn-save { background: linear-gradient(135deg, #003057 0%, #1b4f9b 50%, #4338ca 100%); padding: 10px 28px; font-size: 14px; border-radius: var(--radius-sm); box-shadow: 0 1px 3px rgba(0,48,87,.3), 0 6px 16px rgba(67,56,202,.15); }
+.btn-save:hover { background: linear-gradient(135deg, #00243f 0%, #163f7e 50%, #3730a3 100%); box-shadow: 0 3px 10px rgba(0,48,87,.35), 0 10px 24px rgba(67,56,202,.2); }
+.btn-link { background: none; border: none; color: var(--accent); font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer; padding: 4px 0; display: inline-flex; align-items: center; gap: 4px; transition: opacity .15s; }
+.btn-link:hover { opacity: .65; }
+.divider { border: none; border-top: 1px solid var(--border-light); margin: 22px 0; }
+
+/* ===== TABLE ===== */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); box-shadow: 0 1px 3px rgba(16,24,40,.06), 0 6px 16px rgba(16,24,40,.08), 0 16px 40px rgba(16,24,40,.04); border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); margin-top: 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr:first-child th { padding: 12px 14px 10px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.th-blue { background: #f0f4ff; color: #3a5bd9; }
+.th-green { background: #f0faf4; color: #1a7f4b; }
+.th-purple { background: #f5f0ff; color: #6a3dd9; }
+.th-orange { background: #fff7ed; color: #c2410c; }
+thead tr:last-child th { padding: 10px 14px; font-size: 11px; font-weight: 600; letter-spacing: .03em; color: var(--text-secondary); background: #fafbfc; border-bottom: 2px solid var(--border); white-space: nowrap; text-align: left; }
+tbody tr { border-bottom: 1px solid var(--border-light); transition: background .12s; position: relative; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: #f8faff; }
+tbody tr[data-clickable]:hover::after { content: 'Click to edit'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--volvo-blue); color: #fff; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 4px; pointer-events: none; z-index: 10; white-space: nowrap; opacity: .85; }
+td { padding: 11px 14px; color: var(--text-primary); vertical-align: middle; }
+.cell-truncate { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; position: relative; }
+.cell-truncate:hover { overflow: visible; white-space: normal; }
+td .tooltip-wrap { position: relative; display: inline-block; max-width: 160px; }
+td .tooltip-wrap .tooltip-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+td .tooltip-wrap .tooltip-full { display: none; position: fixed; background: var(--volvo-blue); color: #fff; padding: 8px 12px; border-radius: var(--radius-xs); font-size: 12px; white-space: pre-wrap; max-width: 360px; min-width: 200px; z-index: 9999; box-shadow: var(--shadow-lg); line-height: 1.5; pointer-events: none; }
+
+/* ===== BADGES ===== */
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.badge-green { background: var(--success-bg); color: #067647; }
+.badge-yellow { background: var(--warning-bg); color: #b54708; }
+.badge-red { background: var(--error-bg); color: #b42318; }
+.badge-gray { background: #f2f4f7; color: #475467; }
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+.badge-green .badge-dot { background: var(--success); }
+.badge-yellow .badge-dot { background: var(--warning); }
+.badge-red .badge-dot { background: var(--error); }
+.badge-gray .badge-dot { background: #98a2b3; }
+
+/* ===== MODALS ===== */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(16,24,40,.55); backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.active { display: flex; animation: modalBgIn .15s ease; }
+@keyframes modalBgIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-card { background: rgba(255,255,255,.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(16,24,40,.08), 0 16px 40px rgba(16,24,40,.12); border: 1px solid rgba(255,255,255,.4); padding: 28px; width: 360px; animation: modalSlide .25s cubic-bezier(.22,1,.36,1); }
+@keyframes modalSlide { from { opacity: 0; transform: translateY(20px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.modal-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; }
+.modal-card input { margin-bottom: 16px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.btn-save-eng { background: linear-gradient(135deg, #1b4f9b 0%, #4338ca 100%); color: #fff; border: none; border-radius: var(--radius-xs); padding: 9px 20px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-save-eng:hover { background: linear-gradient(135deg, #163f7e 0%, #3730a3 100%); }
+.btn-cancel-eng { background: #fff; color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 9px 20px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.btn-cancel-eng:hover { background: #f9fafb; border-color: #c4cad5; }
+
+/* ===== LOADING ===== */
+.loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,.75); backdrop-filter: blur(6px); z-index: 300; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+.loading-overlay.active { display: flex; }
+.progress-ring { position: relative; width: 80px; height: 80px; }
+.progress-ring svg { animation: progressSpin 2.5s linear infinite; }
+.progress-ring circle.track { stroke: var(--border); }
+.progress-ring circle.fill { stroke: var(--accent); transition: stroke-dashoffset .3s ease; }
+.progress-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--accent); }
+@keyframes progressSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+
+/* ===== TOAST ===== */
+.toast { position: fixed; bottom: 32px; right: 32px; background: var(--volvo-blue); color: #fff; padding: 12px 22px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg); z-index: 400; display: flex; align-items: center; gap: 8px; transform: translateY(20px); opacity: 0; transition: all .3s cubic-bezier(.22,1,.36,1); pointer-events: none; }
+.toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+.footer { text-align: center; padding: 32px 0 24px; color: var(--text-muted); font-size: 12px; letter-spacing: .02em; }
+
+/* ===== DARK MODE ===== */
+body.dark {
+  --bg: #0d1117; --surface: #161b22; --surface-elevated: #1c2129;
+  --border: #30363d; --border-light: #21262d;
+  --text-primary: #e6edf3; --text-secondary: #8b949e; --text-tertiary: #6e7681; --text-muted: #484f58;
+  --accent: #58a6ff; --accent-light: #1a2332; --accent-hover: #79b8ff; --accent-glow: rgba(88,166,255,.15);
+  --volvo-blue: #152238; --volvo-steel: #6e8fc4;
+  --success: #3fb950; --success-bg: #0d2117; --warning: #d29922; --warning-bg: #2a1f05;
+  --error: #f85149; --error-bg: #2d1214;
+}
+body.dark .topbar { background: linear-gradient(135deg, rgba(1,4,9,.92) 0%, rgba(13,17,23,.95) 100%); border-bottom: 1px solid rgba(255,255,255,.04); }
+body.dark .th-blue { background: #131d2e !important; color: #58a6ff !important; }
+body.dark .th-green { background: #0d2117 !important; color: #3fb950 !important; }
+body.dark .th-purple { background: #1c1530 !important; color: #bc8cff !important; }
+body.dark .th-orange { background: #2a1505 !important; color: #fb923c !important; }
+body.dark thead tr:last-child th { background: #161b22 !important; color: #8b949e !important; }
+body.dark tbody tr:hover { background: #1c2129 !important; }
+body.dark .modal-card, body.dark .confirm-card { background: rgba(22,27,34,.88); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,.06); }
+body.dark input[type="text"], body.dark input[type="date"], body.dark input[type="week"],
+body.dark select, body.dark textarea { background: #0d1117; border-color: #30363d; color: #e6edf3; }
+body.dark input:focus, body.dark select:focus, body.dark textarea:focus { background: #161b22 !important; }
+body.dark select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%236e7681' d='M5 7L1 3h8z'/%3E%3C/svg%3E"); }
+body.dark .loading-overlay { background: rgba(13,17,23,.92); backdrop-filter: blur(12px); }
+body.dark .btn-confirm-no:hover { background: #1c2129; }
+body.dark .role-filter-bar { background: rgba(22,27,34,.7); border-color: rgba(255,255,255,.06); }
+body.dark .badge-green { background: #0d2117; color: #3fb950; }
+body.dark .badge-yellow { background: #2a1f05; color: #d29922; }
+body.dark .badge-red { background: #2d1214; color: #f85149; }
+body.dark .badge-gray { background: #21262d; color: #8b949e; }
+body.dark td .tooltip-wrap .tooltip-full { background: #1c2129; }
+
+/* Dark mode toggle */
+.dark-toggle { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); border-radius: 20px; padding: 5px 12px; color: rgba(255,255,255,.85); font-size: 15px; cursor: pointer; transition: all .2s; display: flex; align-items: center; }
+.dark-toggle:hover { background: rgba(255,255,255,.16); }
+
+/* Role filter bar */
+.role-filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 10px 20px; background: rgba(255,255,255,.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,.35); box-shadow: 0 1px 4px rgba(16,24,40,.05), 0 4px 12px rgba(16,24,40,.04); flex-wrap: wrap; }
+.role-filter-bar .filter-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+.role-filter-bar select { max-width: 220px; }
+.filter-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); transition: all .15s; font-family: inherit; }
+.filter-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.filter-toggle.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Delete button */
+.btn-delete { background: none; border: 1px solid transparent; border-radius: var(--radius-xs); padding: 4px 7px; cursor: pointer; color: var(--text-muted); transition: all .15s; display: inline-flex; align-items: center; }
+.btn-delete:hover { background: var(--error-bg); border-color: var(--error); color: var(--error); }
+
+/* Confirmation modal */
+.confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(16,24,40,.55); backdrop-filter: blur(4px); z-index: 250; align-items: center; justify-content: center; }
+.confirm-overlay.active { display: flex; animation: modalBgIn .15s ease; }
+.confirm-card { background: rgba(255,255,255,.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(16,24,40,.08), 0 16px 40px rgba(16,24,40,.12); border: 1px solid rgba(255,255,255,.4); padding: 28px 32px; width: 420px; text-align: center; animation: modalSlide .25s cubic-bezier(.22,1,.36,1); }
+.confirm-icon { width: 52px; height: 52px; border-radius: 50%; background: var(--warning-bg); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+.confirm-title { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.confirm-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 22px; line-height: 1.6; }
+.confirm-actions { display: flex; gap: 10px; justify-content: center; }
+.btn-confirm-yes { background: linear-gradient(135deg, #1b4f9b 0%, #4338ca 100%); color: #fff; border: none; border-radius: var(--radius-xs); padding: 9px 24px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-confirm-yes:hover { background: linear-gradient(135deg, #163f7e 0%, #3730a3 100%); }
+.btn-confirm-no { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 9px 24px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.btn-confirm-no:hover { background: #f3f4f6; }
+
+#qualityTask option { border-bottom: 1px dashed var(--border); padding: 4px 8px; }
+
+/* ===== LOGIN OVERLAY ===== */
+.login-overlay {
+  display: flex; position: fixed; inset: 0;
+  background: linear-gradient(135deg, rgba(0,48,87,.97) 0%, rgba(10,37,64,.99) 100%);
+  z-index: 999; align-items: center; justify-content: center; flex-direction: column; gap: 24px;
+}
+.login-overlay.hidden { display: none; }
+.login-card {
+  background: rgba(255,255,255,.07); backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,.13); border-radius: var(--radius);
+  padding: 36px 40px; width: 360px; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+.login-logo { margin-bottom: 20px; }
+.login-title { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+.login-subtitle { font-size: 13px; color: rgba(255,255,255,.5); margin-bottom: 24px; }
+.login-label { display: block; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.6); text-align: left; margin-bottom: 6px; letter-spacing: .04em; }
+.login-select {
+  width: 100%; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18);
+  border-radius: var(--radius-xs); padding: 10px 14px; font-family: inherit; font-size: 14px;
+  color: #fff; outline: none; margin-bottom: 20px; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23ffffff88' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; appearance: none;
+}
+.login-select option { background: #0a2540; color: #fff; }
+.login-select:focus { border-color: rgba(255,255,255,.4); }
+.btn-login {
+  width: 100%; background: linear-gradient(135deg, #1b4f9b 0%, #4338ca 100%);
+  color: #fff; border: none; border-radius: var(--radius-xs); padding: 11px 0;
+  font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: all .2s; letter-spacing: .02em;
+}
+.btn-login:hover { background: linear-gradient(135deg, #163f7e 0%, #3730a3 100%); transform: translateY(-1px); }
+.login-footer { color: rgba(255,255,255,.25); font-size: 11px; margin-top: 16px; }
+
+/* ===== DASHBOARD MODAL ===== */
+.dash-overlay { display: none; position: fixed; inset: 0; background: rgba(16,24,40,.6); backdrop-filter: blur(6px); z-index: 200; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
+.dash-overlay.active { display: flex; animation: modalBgIn .15s ease; }
+.dash-modal {
+  background: rgba(255,255,255,.9); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius); box-shadow: 0 4px 12px rgba(16,24,40,.1), 0 20px 60px rgba(16,24,40,.15);
+  border: 1px solid rgba(255,255,255,.45); padding: 32px; width: 100%; max-width: 860px;
+  animation: modalSlide .25s cubic-bezier(.22,1,.36,1);
+}
+body.dark .dash-modal { background: rgba(22,27,34,.92); border-color: rgba(255,255,255,.08); }
+.dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.dash-title { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.dash-project-tag { font-size: 12px; font-weight: 600; background: var(--accent-light); color: var(--accent); padding: 4px 12px; border-radius: 20px; }
+.btn-dash-close { background: none; border: none; cursor: pointer; color: var(--text-tertiary); padding: 4px; border-radius: 6px; transition: all .15s; display:flex; align-items:center; }
+.btn-dash-close:hover { background: var(--border-light); color: var(--text-primary); }
+
+/* Summary cards row */
+.dash-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+.dash-card {
+  background: rgba(255,255,255,.7); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 18px 20px; cursor: pointer; transition: all .2s; position: relative; overflow: hidden;
+}
+body.dark .dash-card { background: rgba(255,255,255,.04); }
+.dash-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--accent); }
+.dash-card-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 12px; }
+.dash-card-main { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 4px; }
+.dash-rag-row { display: flex; gap: 12px; align-items: center; }
+.dash-rag-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.dash-rag-num { font-size: 28px; font-weight: 800; line-height: 1; }
+.dash-rag-lbl { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.dash-rag-green { color: var(--success); }
+.dash-rag-yellow { color: var(--warning); }
+.dash-rag-red { color: var(--error); }
+.dash-rag-gray { color: var(--text-tertiary); }
+.dash-ring-wrap { display: flex; gap: 20px; align-items: center; }
+.dash-ring { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+.dash-ring svg { transform: rotate(-90deg); }
+.dash-ring-track { stroke: var(--border); }
+.dash-ring-fill-cur { stroke: var(--accent); transition: stroke-dashoffset .6s ease; }
+.dash-ring-fill-all { stroke: var(--success); transition: stroke-dashoffset .6s ease; }
+.dash-ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--text-primary); line-height: 1.1; }
+.dash-ring-sub { font-size: 9px; font-weight: 600; color: var(--text-tertiary); letter-spacing: .04em; }
+.dash-dev-num { font-size: 36px; font-weight: 800; color: var(--error); line-height: 1; }
+.dash-dev-lbl { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+.dash-card-hint { font-size: 10px; color: var(--text-muted); margin-top: 8px; }
+
+/* Expanded breakdown inside modal */
+.dash-breakdown { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light); }
+.dash-breakdown.open { display: block; }
+.dash-gate-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
+.dash-gate-tag { font-size: 10px; font-weight: 700; width: 36px; text-align: center; padding: 2px 4px; border-radius: 4px; background: var(--accent-light); color: var(--accent); flex-shrink: 0; }
+.dash-gate-tag.current { background: var(--accent); color: #fff; }
+.dash-bar-wrap { flex: 1; background: var(--border-light); border-radius: 4px; height: 8px; overflow: hidden; }
+.dash-bar-fill { height: 100%; border-radius: 4px; transition: width .5s ease; }
+.dash-bar-green { background: var(--success); }
+.dash-bar-yellow { background: var(--warning); }
+.dash-bar-red { background: var(--error); }
+.dash-pct-lbl { font-size: 11px; font-weight: 600; color: var(--text-secondary); width: 36px; text-align: right; flex-shrink: 0; }
+
+/* Gate timeline x/y */
+.gate-node .gate-xy { font-size: 9px; font-weight: 700; color: var(--accent); margin-top: 3px; text-align: center; line-height: 1.2; }
+.gate-node .gate-xy .xy-completed { font-size: 8px; font-weight: 500; color: var(--text-muted); }
+.gate-node.deviated .gate-xy { color: var(--error); }
+
+/* Audit trail */
+.audit-panel { margin-top: 28px; border-top: 1px solid var(--border-light); padding-top: 24px; }
+.audit-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.audit-list { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.audit-item { background: var(--border-light); border-radius: var(--radius-xs); padding: 10px 14px; font-size: 12px; display: flex; flex-direction: column; gap: 3px; }
+body.dark .audit-item { background: rgba(255,255,255,.04); }
+.audit-item-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.audit-user { font-weight: 700; color: var(--accent); }
+.audit-time { color: var(--text-muted); font-size: 11px; margin-left: auto; }
+.audit-detail { color: var(--text-secondary); line-height: 1.5; }
+.audit-change { display: inline-flex; align-items: center; gap: 4px; }
+.audit-old { color: var(--error); text-decoration: line-through; }
+.audit-new { color: var(--success); font-weight: 600; }
+.audit-empty { color: var(--text-muted); font-size: 12px; text-align: center; padding: 20px 0; }
+
+/* btn-dashboard in topbar */
+.btn-dashboard { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background .15s; font-family: inherit; }
+.btn-dashboard:hover { background: rgba(255,255,255,.22); }
+
+/* User chip in topbar */
+.user-chip { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 20px; padding: 5px 12px; color: rgba(255,255,255,.85); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.user-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+</style>
+</head>
+<body>
+
+<!-- ==================== LOGIN OVERLAY ==================== -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAEZCAMAAABW0ifkAAABgFBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAURmmrAAAAf3RSTlMAAgQGCAoMDhASFBYYGhweICIkJigqLC4wMjQ2ODo8PkBCREZISkxOUFJUVlhaXF5gYmRmaGpsbnBydHZ4enx+gYOFh4mLjY+Rk5WXmZudn6Gjpaepq62vsbO1t7m7vb/Bw8XHycvNz9HT1dfZ293f4ePl5+nr7e/x8/X3+fv9RzjXsgAAKWJJREFUeNrtXYd/07gX23MGmw46KXuWfWy4H2X1WFf2sY+9jr0pbaEjif/1H1m2rPdkS4rsOAF9brT9JpJjxU9vfh+D6mDVf6DxX3+Iv5OA927uJ22AUWgLAIPP324AA/ZzAKv9v/5fkwGyt2sCQP6YEBC4F50MVPY98Lw1fuN+rH878G/ej/XfGPcyLYD5f2WB1yQKcDcL37MOAn6PX3DUhay3/QBYAPpHgPc0QABg+EcjgDFh4oSBX0e8CwIdgtIP/xX9huWlGYBFLyQPNH7qaOD3+DXFe/1JD+o5/NMX+BMNCHoSEzBFgOGVEwV+OfEOnGYe0N5BJt5BJqzNAeGkgWQBwryVGb5tDQjK1e/xa4h34MQ7CzyFAUOe0MVAZvgaPOl1ywBaC9StF6As2w4DgBB2AKRazwsI4U1AOHeUAcpFymS+03iBX8YNq+IXDRrXlFrWPJAGN+wvJN5JhytDGh7jHa8gxko4APQAJFBE9S4RoCoOOb2nUwEGIG4ew8KXm4H5+iAHIBc76AHgy3jG0BcjKYD3ZvhaL+s4IChyIVy8cy4dUlgDNAn8Fu/JiXfkg2Uybytp6jJOXoIZQJjRjJA3sQOE+7ITgd/jV7fTef9q0GrXDlAz0AXSFU/Hp0EnAerWHotOMGIyWAsQfQIWgVyhf2zTjn1/Hj124sSxiUN7t60f7e3OSq6KyT5gmwOagXdFXQiCMXoFIG5x1jWy6fDp60/fTi+Uy25glEs/vrx+eOXk7tUDWaxXdmrAhdF2sv+jaLUDATDBkNMFGFocO37NgMzQtr9uvPkubDU1lr69uHx4Q68TSOLyVD4GnLO67YHQbFgl6S+awUZAHD7Hwubj976VXK2x9O764ZX5jnfDAiPsdSYKYlCQ+2EmdwQAsnPDEIDuDWeeL7iGY/bukZVZ6GTxDhHivQ3TpYYOPZhzmxvlL1d3FPg8Ot7wXXfVaExliFQmJlkjRqDzhjN24lXRtTLmHxzoJe/RfrP5ZrJpC7gE/88YJfe590TFzEAbIM1pTQCGj78uuxbHwr29BZxB3sSmg0z0Jgkoi3dJ6UNAs2fNAAxVQYAeAN17Hhdd62Pu2gZHkJc7yxY2PXhQJgl0kG9x7PysG88ovzsWFPOw6WVniPdA/I17+kCWJksAvunPtIDmc1uz2x6X3BjHjyurAsZMZv+0TfGecKFTpB8PxdMZjqcDQ0VqWgCIAbdAzDsa6Dr8wY17lB6NO/xnLkwtGWw6TsYl3ExxA5ru19gBg+g4FE5Ou0mM8stdGX7hlc8NxXva3bDM0E5n2gBRU6UE9EzOuomNt7syfh4JZA5/19x0LnWH8SkpkDSg6oZlSg4/02EYl+uamHETHa+2O9zFDN7X33Rca4EO07gBIQsWZGICRJ8p4PxZZI5rAQbiPbPvi5v4eLqWuxbnwI92FO+STFGJpCfy3oWYmRHAZFI8FNj0ym3FKN0Y9BJNGRt+ovWkM+6T8zm5CQLtbJcP3TZwkZS+f/3w5r9H9+7e+ffewycv3336tmAwy/zJvH8h2cklzSc9BXY653sNqkqMdMOKxfx2qlaDzlkFIHd8XmuzZ1/cPnVoy/JlhSzwUzm53sHVOyYu3H+rt/nvNoPv11z/2chOB5nvNHaAiKfTOhRVtRo08sWaBi1As" alt="Volvo" style="height:32px; width:auto; object-fit:contain; opacity:.9;">
+    </div>
+    <p class="login-title">Quality Task Plan</p>
+    <p class="login-subtitle">Select your name to continue</p>
+    <label class="login-label">Who are you?</label>
+    <select id="loginUserSelect" class="login-select">
+      <option value="">— Select your name —</option>
+    </select>
+    <p style="font-size:11px;color:rgba(255,255,255,.35);margin:-14px 0 10px;text-align:left;">Or type your name below if not listed</p>
+    <input id="loginUserInput" type="text" placeholder="Type your name..." style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:10px 14px;font-family:inherit;font-size:14px;color:#fff;outline:none;margin-bottom:20px;" oninput="document.getElementById('loginUserSelect').value=''">
+    <button class="btn-login" onclick="doLogin()">Enter QTP</button>
+    <p class="login-footer">Volvo TTI · Internal Use Only</p>
+  </div>
+</div>
+
+<!-- ==================== TOPBAR ==================== -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <img src="data:image/png;base64,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" alt="Volvo" style="height:36px; width:auto; object-fit:contain;">
+    <div class="logo-divider"></div>
+    <span class="logo-text">TTI Quality</span>
+  </div>
+  <span class="topbar-quote">"Quality lasts when you put it first."</span>
+  <div class="topbar-controls">
+    <input type="file" id="qtpFileInput" accept=".xlsx,.xls" style="display:none" onchange="uploadQTP(this)">
+    <button class="btn-dashboard" onclick="openDashboard()" title="Project Overview Dashboard">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+      Dashboard
+    </button>
+    <button class="btn-upload-qtp" onclick="document.getElementById('qtpFileInput').click()" title="Upload QTP Excel file">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v9M4 4l3-3 3 3M2 10v2h10v-2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Upload QTP
+    </button>
+    <span class="topbar-badge">Internal Tool</span>
+    <div class="user-chip" id="userChip" style="display:none;">
+      <span class="user-chip-dot"></span>
+      <span id="userChipName"></span>
+    </div>
+    <button class="dark-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+      <svg id="darkIcon" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8.5A6.5 6.5 0 017.5 2 5.5 5.5 0 1014 8.5z" fill="currentColor"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <div class="page-header">
+    <h1>Quality Task Plan</h1>
+    <p>Project Quality Gate Management</p>
+  </div>
+
+  <!-- ==================== GATE TIMELINE ==================== -->
+  <div class="gate-timeline" id="gateTimeline"></div>
+
+  <!-- ==================== CARD 1: PROJECT CONTEXT ==================== -->
+  <div class="card">
+    <p class="section-label">
+      <span class="icon blue"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="5.5" y="1" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="5.5" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="5.5" y="5.5" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg></span>
+      Project Context
+    </p>
+    <div class="context-bar">
+      <div class="field-group">
+        <label class="field-label" for="projectId">Project ID</label>
+        <input id="projectId" type="text" placeholder="e.g. V123">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="gateSelect">Gate</label>
+        <select id="gateSelect" onchange="onGateChange()">
+          <option>PCI</option><option>FeG</option><option>CSG</option>
+          <option>CG</option><option>DG</option><option>FDG</option>
+          <option>FIG</option><option>RG</option><option>EG</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="nextGateStartDate">Next Gate Start Date</label>
+        <input type="date" id="nextGateStartDate">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="deviationSelect">Deviation</label>
+        <select id="deviationSelect" onchange="onDeviationChange()">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+      <div class="field-group" style="display:flex; align-items:flex-end;">
+        <button class="btn-primary" onclick="loadProject()" style="white-space:nowrap;">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Load Project
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CARD 2: EDIT QUALITY TASK ==================== -->
+  <div class="card">
+    <p class="section-label">
+      <span class="icon green"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5.5L4.2 7.5L8 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      Edit Quality Task
+    </p>
+
+    <!-- ROW 1: Dropdowns -->
+    <div class="form-grid-top">
+      <div>
+        <label class="field-label" for="itemSelect">Name of Item</label>
+        <select id="itemSelect" onchange="document.getElementById('itemName').value=this.value" style="margin-bottom:6px;">
+        </select>
+        <button class="btn-link" onclick="openItemModal()">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Add Item
+        </button>
+        <input id="itemName" type="hidden">
+      </div>
+      <div>
+        <label class="field-label" for="qualityTask">Quality Task</label>
+        <select id="qualityTask" onchange="loadTaskData(); autoFillFromCriteria();"></select>
+      </div>
+      <div>
+        <label class="field-label" for="qualityEngineer">Quality Engineer</label>
+        <select id="qualityEngineer" style="margin-bottom:6px;"><option value="">Select Engineer</option></select>
+        <button class="btn-link" onclick="openEngineerModal('qualityEngineer')">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Add Engineer
+        </button>
+      </div>
+      <div>
+        <label class="field-label" for="responsibleEngineer">Responsible Engineer</label>
+        <select id="responsibleEngineer" style="margin-bottom:6px;"><option value="">Select Engineer</option></select>
+        <button class="btn-link" onclick="openEngineerModal('responsibleEngineer')">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Add Engineer
+        </button>
+      </div>
+    </div>
+
+    <!-- ROW 2: Detail Fields -->
+    <div class="form-grid">
+      <div>
+        <label class="field-label" for="expectedStatus">Expected Status</label>
+        <select id="expectedStatus">
+          <option>Planned</option>
+          <option>To be planned before next gate.</option>
+          <option>Started</option>
+          <option>In Progress</option>
+          <option>Start/Complete</option>
+          <option>Completed</option>
+          <option>N/A</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="actualStatus">Actual Status</label>
+        <select id="actualStatus">
+          <option>Following Plan</option>
+          <option>Completed</option>
+          <option>Late vs planning</option>
+          <option>N/A</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="rating">Rating</label>
+        <select id="rating">
+          <option>Green</option><option>Yellow</option><option>Red</option><option>N/A</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="followUpWeek">Follow-up Week</label>
+        <input type="week" id="followUpWeek">
+      </div>
+      <div>
+        <label class="field-label" for="plannedStart">Planned Start</label>
+        <input type="date" id="plannedStart">
+      </div>
+      <div>
+        <label class="field-label" for="plannedEnd">Planned End</label>
+        <input type="date" id="plannedEnd">
+      </div>
+      <div>
+        <label class="field-label" for="completionLevel">Level of Completion (Gate-specific)</label>
+        <textarea id="completionLevel" style="min-height:80px;"></textarea>
+      </div>
+      <div>
+        <label class="field-label" for="comments">Comments</label>
+        <textarea id="comments" style="min-height:80px;" placeholder="Add any comments..."></textarea>
+      </div>
+      <div>
+        <label class="field-label" for="deviationText">Deviation to Plan / Request for Support</label>
+        <textarea id="deviationText" style="min-height:80px;" placeholder="Describe any deviation or support needed..."></textarea>
+      </div>
+    </div>
+    <hr class="divider">
+    <button class="btn-primary btn-save" onclick="saveTask()">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 7l3.5 3.5L11 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Save / Update Task
+    </button>
+  </div>
+
+  <!-- ==================== ROLE FILTER ==================== -->
+  <div class="role-filter-bar">
+    <span class="filter-label">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4.5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 13c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Viewing as
+    </span>
+    <select id="currentUserSelect" onchange="onUserFilterChange()" style="max-width:220px;">
+      <option value="">All Engineers (No Filter)</option>
+    </select>
+    <button class="filter-toggle" id="myTasksBtn" onclick="toggleMyTasks()" type="button">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6L4.5 9L10.5 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      My Tasks Only
+    </button>
+  </div>
+
+  <!-- ==================== TABLE ==================== -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th colspan="4" class="th-blue" style="text-align:left;">Decided Quality Tasks</th>
+          <th colspan="7" class="th-green" style="text-align:left;">Quality Task Report</th>
+          <th colspan="3" class="th-purple" style="text-align:left;">Follow-Up / Planning</th>
+          <th colspan="1" class="th-orange" style="text-align:left;">Details</th>
+          <th class="th-purple" style="text-align:center;font-size:13px;">&#9881;</th>
+        </tr>
+        <tr>
+          <th>Project</th>
+          <th>Item</th>
+          <th>Quality Task</th>
+          <th>Gate</th>
+          <th>Quality Eng.</th>
+          <th>Responsible Eng.</th>
+          <th>Expected Status</th>
+          <th>Actual Status</th>
+          <th>Rating</th>
+          <th>Completion Level</th>
+          <th>Deviation</th>
+          <th>Follow-up</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Comments</th>
+          <th style="text-align:center;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="taskTable"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">Volvo TTI &middot; Quality Task Plan &middot; Internal Use Only</div>
+</div>
+
+<!-- ==================== DASHBOARD MODAL ==================== -->
+<div class="dash-overlay" id="dashOverlay" onclick="if(event.target===this)closeDashboard()">
+  <div class="dash-modal">
+    <div class="dash-header">
+      <div>
+        <p class="dash-title">Project Overview</p>
+        <span class="dash-project-tag" id="dashProjectTag">No project loaded</span>
+      </div>
+      <button class="btn-dash-close" onclick="closeDashboard()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="dash-cards">
+      <!-- RAG Card -->
+      <div class="dash-card" onclick="toggleDashBreakdown('ragBreakdown')">
+        <p class="dash-card-label">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline;vertical-align:middle;margin-right:4px"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 3.5v2.5l1.5 1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Rating · Current Gate
+        </p>
+        <div class="dash-rag-row" id="dashRagRow">
+          <div class="dash-rag-item"><span class="dash-rag-num dash-rag-green" id="dashGreenCount">0</span><span class="dash-rag-lbl dash-rag-green">Green</span></div>
+          <div class="dash-rag-item"><span class="dash-rag-num dash-rag-yellow" id="dashYellowCount">0</span><span class="dash-rag-lbl dash-rag-yellow">Yellow</span></div>
+          <div class="dash-rag-item"><span class="dash-rag-num dash-rag-red" id="dashRedCount">0</span><span class="dash-rag-lbl dash-rag-red">Red</span></div>
+          <div class="dash-rag-item"><span class="dash-rag-num dash-rag-gray" id="dashNaCount">0</span><span class="dash-rag-lbl dash-rag-gray">N/A</span></div>
+        </div>
+        <p class="dash-card-hint">Click to see all gates →</p>
+        <div class="dash-breakdown" id="ragBreakdown"></div>
+      </div>
+
+      <!-- Completion Card -->
+      <div class="dash-card" onclick="toggleDashBreakdown('completionBreakdown')">
+        <p class="dash-card-label">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M2 6l3 3 4-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Completion
+        </p>
+        <div class="dash-ring-wrap">
+          <div>
+            <div class="dash-ring" id="ringCurGate">
+              <svg width="72" height="72" viewBox="0 0 72 72"><circle class="dash-ring-track" cx="36" cy="36" r="28" stroke-width="5" fill="none"/><circle class="dash-ring-fill-cur" id="ringCurFill" cx="36" cy="36" r="28" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="175.9"/></svg>
+              <div class="dash-ring-text"><span id="ringCurPct">0%</span><span class="dash-ring-sub">Gate</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="dash-ring">
+              <svg width="72" height="72" viewBox="0 0 72 72"><circle class="dash-ring-track" cx="36" cy="36" r="28" stroke-width="5" fill="none"/><circle class="dash-ring-fill-all" id="ringAllFill" cx="36" cy="36" r="28" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="175.9"/></svg>
+              <div class="dash-ring-text"><span id="ringAllPct">0%</span><span class="dash-ring-sub">Overall</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="dash-card-hint">Click to see per-gate →</p>
+        <div class="dash-breakdown" id="completionBreakdown"></div>
+      </div>
+
+      <!-- Deviation Card -->
+      <div class="dash-card" onclick="toggleDashBreakdown('deviationBreakdown')">
+        <p class="dash-card-label">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M5.5 1L1 9.5h9L5.5 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M5.5 5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="5.5" cy="8" r=".6" fill="currentColor"/></svg>
+          Deviations
+        </p>
+        <div class="dash-card-main">
+          <span class="dash-dev-num" id="dashDevCount">0</span>
+        </div>
+        <p class="dash-dev-lbl">tasks deviated in current gate</p>
+        <p class="dash-card-hint">Click to see all gates →</p>
+        <div class="dash-breakdown" id="deviationBreakdown"></div>
+      </div>
+    </div>
+
+    <!-- Audit Trail -->
+    <div class="audit-panel">
+      <p class="audit-title">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1a6 6 0 100 12A6 6 0 007 1zM7 4v4l2.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Audit Trail
+      </p>
+      <div class="audit-list" id="auditList">
+        <p class="audit-empty">No changes recorded yet.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOAST ==================== -->
+<div class="toast" id="toast">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7.5l3 3 5-6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <span id="toastMsg">Saved successfully</span>
+</div>
+
+<!-- ==================== ADD ENGINEER MODAL ==================== -->
+<div class="modal-overlay" id="engineerModal" onclick="if(event.target===this)closeEngineerModal()">
+  <div class="modal-card">
+    <p class="modal-title">Add Engineer</p>
+    <p class="modal-subtitle">This engineer will be available to all users.</p>
+    <input id="newEngineerInput" type="text" placeholder="Full name (e.g. Anna Johansson)" onkeydown="if(event.key==='Enter') confirmAddEngineer()">
+    <div class="modal-actions">
+      <button class="btn-cancel-eng" onclick="closeEngineerModal()">Cancel</button>
+      <button class="btn-save-eng" onclick="confirmAddEngineer()">Add Engineer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADD ITEM MODAL ==================== -->
+<div class="modal-overlay" id="itemModal" onclick="if(event.target===this)closeItemModal()">
+  <div class="modal-card">
+    <p class="modal-title">Add Item</p>
+    <p class="modal-subtitle">Enter a new item/component name for this project.</p>
+    <input id="newItemInput" type="text" placeholder="Item name (e.g. Turbo Charger)" onkeydown="if(event.key==='Enter') confirmAddItem()">
+    <div class="modal-actions">
+      <button class="btn-cancel-eng" onclick="closeItemModal()">Cancel</button>
+      <button class="btn-save-eng" onclick="confirmAddItem()">Add Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== INCOMPLETE SAVE CONFIRMATION ==================== -->
+<div class="confirm-overlay" id="confirmSaveModal" onclick="if(event.target===this)closeConfirmSave()">
+  <div class="confirm-card">
+    <div class="confirm-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#f79009" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <p class="confirm-title">Incomplete Entry</p>
+    <p class="confirm-subtitle" id="confirmSaveMsg">Some fields are not filled in. Do you still want to save this task?</p>
+    <div class="confirm-actions">
+      <button class="btn-confirm-no" onclick="closeConfirmSave()">Cancel</button>
+      <button class="btn-confirm-yes" onclick="forceSaveTask()">Save Anyway</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== LOADING OVERLAY ==================== -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="progress-ring">
+    <svg width="80" height="80" viewBox="0 0 80 80">
+      <circle class="track" cx="40" cy="40" r="34" stroke-width="5" fill="none"/>
+      <circle class="fill" id="progressCircle" cx="40" cy="40" r="34" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="213.63" stroke-dashoffset="213.63"/>
+    </svg>
+    <div class="progress-text" id="progressText">0%</div>
+  </div>
+  <p class="loading-text" id="loadingMsg">Loading project data...</p>
+  <p class="loading-step" id="loadingStep" style="font-size:12px;color:var(--text-muted);margin-top:4px;min-height:18px;transition:opacity .25s;"></p>
+</div>
+
+<script>
+// ===== CONSTANTS =====
+const gateOrder = ["PCI","FeG","CSG","CG","DG","FDG","FIG","RG","EG"];
+
+// ===== CURRENT USER =====
+let currentUser = "";
+
+function doLogin() {
+  const sel = document.getElementById("loginUserSelect");
+  const inp = document.getElementById("loginUserInput");
+  const name = (inp.value.trim()) || sel.value.trim();
+  if (!name) {
+    inp.style.borderColor = "rgba(240,68,56,.6)";
+    sel.style.borderColor = "rgba(240,68,56,.6)";
+    setTimeout(() => { inp.style.borderColor = ""; sel.style.borderColor = ""; }, 1000);
+    return;
+  }
+  currentUser = name;
+  localStorage.setItem("lastUser", name);
+  // Also add to engineer list if new
+  if (!engineerMaster.includes(name)) {
+    engineerMaster.push(name);
+    localStorage.setItem("engineerMaster", JSON.stringify(engineerMaster));
+    fetch("/save-engineer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) }).catch(() => {});
+  }
+  document.getElementById("loginOverlay").classList.add("hidden");
+  document.getElementById("userChip").style.display = "flex";
+  document.getElementById("userChipName").textContent = name;
+}
+
+function populateLoginDropdown() {
+  const sel = document.getElementById("loginUserSelect");
+  const saved = localStorage.getItem("lastUser");
+  const sorted = [...engineerMaster].sort((a,b) => a.localeCompare(b));
+  sorted.forEach(name => {
+    const o = document.createElement("option");
+    o.value = name; o.textContent = name;
+    if (name === saved) o.selected = true;
+    sel.appendChild(o);
+  });
+  if (saved && engineerMaster.includes(saved)) {
+    currentUser = saved;
+    document.getElementById("loginOverlay").classList.add("hidden");
+    document.getElementById("userChip").style.display = "flex";
+    document.getElementById("userChipName").textContent = saved;
+  }
+}
+
+// ===== AUDIT TRAIL =====
+let auditLog = JSON.parse(localStorage.getItem("qtpAuditLog") || "[]");
+
+function logAudit(project, item, task, gate, changes) {
+  if (!currentUser || !project) return;
+  const entry = {
+    user: currentUser,
+    project, item, task, gate,
+    changes,
+    ts: new Date().toISOString()
+  };
+  auditLog.unshift(entry);
+  if (auditLog.length > 200) auditLog = auditLog.slice(0, 200);
+  localStorage.setItem("qtpAuditLog", JSON.stringify(auditLog));
+}
+
+function renderAuditList() {
+  const list = document.getElementById("auditList");
+  const projectLogs = auditLog.filter(e => e.project === currentProject);
+  if (!projectLogs.length) { list.innerHTML = '<p class="audit-empty">No changes recorded yet for this project.</p>'; return; }
+  list.innerHTML = projectLogs.slice(0, 50).map(e => {
+    const d = new Date(e.ts);
+    const timeStr = d.toLocaleDateString() + " " + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    const changeHtml = Object.entries(e.changes).map(([field, [oldV, newV]]) =>
+      `<span class="audit-change"><b>${field}:</b> <span class="audit-old">${oldV||'—'}</span> → <span class="audit-new">${newV||'—'}</span></span>`
+    ).join("  ·  ");
+    return `<div class="audit-item">
+      <div class="audit-item-header">
+        <span class="audit-user">${escHtml(e.user)}</span>
+        <span style="color:var(--text-muted);font-size:11px;">${escHtml(e.gate)} · ${escHtml(e.item)} · ${escHtml(e.task)}</span>
+        <span class="audit-time">${timeStr}</span>
+      </div>
+      <div class="audit-detail">${changeHtml}</div>
+    </div>`;
+  }).join("");
+}
+
+// ===== DASHBOARD =====
+function openDashboard() {
+  if (!currentProject) { showToast("Load a project first"); return; }
+  document.getElementById("dashProjectTag").textContent = currentProject;
+  computeDashboard();
+  renderAuditList();
+  document.getElementById("dashOverlay").classList.add("active");
+}
+
+function closeDashboard() {
+  document.getElementById("dashOverlay").classList.remove("active");
+  // Close all breakdowns
+  ["ragBreakdown","completionBreakdown","deviationBreakdown"].forEach(id => {
+    document.getElementById(id).classList.remove("open");
+  });
+}
+
+function toggleDashBreakdown(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle("open");
+  if (el.classList.contains("open")) computeBreakdown(id);
+}
+
+function isTaskCompleted(gd) {
+  if (!gd) return false;
+  const as = (gd.actual_status || "").toLowerCase();
+  return as === "completed";
+}
+
+function isTaskNA(gd) {
+  const as = (gd.actual_status || "").toLowerCase();
+  const r = (gd.rating || "").toLowerCase();
+  return as === "n/a" || r === "n/a";
+}
+
+function computeDashboard() {
+  const proj = store[currentProject] || {};
+  const gate = currentGateValue;
+  let green=0, yellow=0, red=0, na=0, dev=0;
+  let curTotal=0, curDone=0, allTotal=0, allDone=0;
+
+  // y = all unique tasks in project regardless of fill
+  const allUniqueTasks = [];
+  Object.values(proj).forEach(itemObj => Object.values(itemObj).forEach(t => allUniqueTasks.push(t)));
+  curTotal = allUniqueTasks.length;
+
+  allUniqueTasks.forEach(t => {
+    // Current gate RAG
+    const gd = t.gates?.[gate] || {};
+    const rating = gd.rating || "";
+    const isNa = isTaskNA(gd);
+    if (isNa) { na++; }
+    else if (rating === "Green") green++;
+    else if (rating === "Yellow") yellow++;
+    else if (rating === "Red") red++;
+    if (gd.deviation === "Yes") dev++;
+
+    // x = only Completed (N/A does not count)
+    if (isTaskCompleted(gd)) curDone++;
+
+    // Overall across all gates
+    gateOrder.forEach(g => {
+      const gx = t.gates?.[g] || {};
+      if (gx.expected_status || gx.actual_status || gx.rating) {
+        allTotal++;
+        if (isTaskCompleted(gx)) allDone++;
+      }
+    });
+  });
+
+  document.getElementById("dashGreenCount").textContent = green;
+  document.getElementById("dashYellowCount").textContent = yellow;
+  document.getElementById("dashRedCount").textContent = red;
+  document.getElementById("dashNaCount").textContent = na;
+  document.getElementById("dashDevCount").textContent = dev;
+
+  const curPct = curTotal ? Math.round(curDone/curTotal*100) : 0;
+  const allPct = allTotal ? Math.round(allDone/allTotal*100) : 0;
+  const circ = 175.9;
+  document.getElementById("ringCurPct").textContent = curPct + "%";
+  document.getElementById("ringAllPct").textContent = allPct + "%";
+  document.getElementById("ringCurFill").style.strokeDashoffset = circ - (curPct/100)*circ;
+  document.getElementById("ringAllFill").style.strokeDashoffset = circ - (allPct/100)*circ;
+}
+
+function computeBreakdown(id) {
+  const proj = store[currentProject] || {};
+  const el = document.getElementById(id);
+
+  if (id === "ragBreakdown") {
+    let html = "";
+    gateOrder.forEach(g => {
+      let g_=0,y_=0,r_=0,na_=0;
+      Object.values(proj).forEach(itemObj => Object.values(itemObj).forEach(t => {
+        const gd = t.gates?.[g] || {};
+        if (!gd.rating && !gd.actual_status) return;
+        const isNa = isTaskNA(gd);
+        if (isNa) na_++;
+        else if (gd.rating==="Green") g_++;
+        else if (gd.rating==="Yellow") y_++;
+        else if (gd.rating==="Red") r_++;
+      }));
+      const total = g_+y_+r_+na_;
+      if (!total) return;
+      const isCur = g === currentGateValue;
+      html += `<div class="dash-gate-row">
+        <span class="dash-gate-tag${isCur?' current':''}">${g}</span>
+        <div style="flex:1;display:flex;gap:4px;align-items:center;">
+          <div style="flex:${g_};background:var(--success);height:8px;border-radius:3px;min-width:${g_?4:0}px;" title="${g_} Green"></div>
+          <div style="flex:${y_};background:var(--warning);height:8px;border-radius:3px;min-width:${y_?4:0}px;" title="${y_} Yellow"></div>
+          <div style="flex:${r_};background:var(--error);height:8px;border-radius:3px;min-width:${r_?4:0}px;" title="${r_} Red"></div>
+          <div style="flex:${na_};background:var(--text-muted);height:8px;border-radius:3px;min-width:${na_?4:0}px;" title="${na_} N/A"></div>
+        </div>
+        <span class="dash-pct-lbl" style="font-size:10px;color:var(--text-muted);">G:${g_} Y:${y_} R:${r_}</span>
+      </div>`;
+    });
+    el.innerHTML = html || '<p style="font-size:12px;color:var(--text-muted);">No data yet.</p>';
+  }
+
+  if (id === "completionBreakdown") {
+    let html = "";
+    gateOrder.forEach(g => {
+      let total=0, done=0;
+      Object.values(proj).forEach(itemObj => Object.values(itemObj).forEach(t => {
+        total++;
+        if (isTaskCompleted(t.gates?.[g] || {})) done++;
+      }));
+      if (!total) return;
+      const pct = Math.round(done/total*100);
+      const isCur = g === currentGateValue;
+      html += `<div class="dash-gate-row">
+        <span class="dash-gate-tag${isCur?' current':''}">${g}</span>
+        <div class="dash-bar-wrap"><div class="dash-bar-fill dash-bar-green" style="width:${pct}%"></div></div>
+        <span class="dash-pct-lbl">${pct}%</span>
+      </div>`;
+    });
+    el.innerHTML = html || '<p style="font-size:12px;color:var(--text-muted);">No data yet.</p>';
+  }
+
+  if (id === "deviationBreakdown") {
+    let html = "";
+    gateOrder.forEach(g => {
+      let count=0;
+      Object.values(proj).forEach(itemObj => Object.values(itemObj).forEach(t => {
+        if (t.gates?.[g]?.deviation === "Yes") count++;
+      }));
+      if (!count) return;
+      const isCur = g === currentGateValue;
+      html += `<div class="dash-gate-row">
+        <span class="dash-gate-tag${isCur?' current':''}">${g}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--error);">${count}</span>
+        <span style="font-size:11px;color:var(--text-muted);">deviation${count>1?'s':''}</span>
+      </div>`;
+    });
+    el.innerHTML = html || '<p style="font-size:12px;color:var(--text-muted);">No deviations recorded.</p>';
+  }
+}
+
+// Track which gates are deviated per project
+let gateStates = {}; // { projectId: { FeG: 'deviated', ... } }
+// The fixed project progress gate index (set when loading, NOT changed by navigation)
+let projectProgressGateIdx = -1;
+let currentGateValue = "PCI";
+let pendingAdvanceGate = null;
+
+// ===== GATE TIMELINE =====
+function buildGateTimeline() {
+  const container = document.getElementById("gateTimeline");
+  container.innerHTML = "";
+  const viewingGate = document.getElementById("gateSelect").value;
+  const states = gateStates[currentProject] || {};
+
+  gateOrder.forEach((g, i) => {
+    const node = document.createElement("div");
+    node.className = "gate-node";
+
+    if (states[g] === 'deviated') {
+      node.classList.add('deviated');
+    } else if (i <= projectProgressGateIdx) {
+      node.classList.add('completed');
+    }
+
+    if (g === viewingGate) {
+      node.classList.add('active');
+    }
+
+    node.innerHTML = '<div class="gate-dot">' + g + '</div>';
+
+    // Show x/y for completed and current gate only
+    if (i <= projectProgressGateIdx && currentProject) {
+      const proj = store[currentProject] || {};
+      let total=0, done=0;
+      Object.values(proj).forEach(itemObj => Object.values(itemObj).forEach(t => {
+        total++;
+        if (isTaskCompleted(t.gates?.[g] || {})) done++;
+      }));
+      if (total > 0) {
+        const xyDiv = document.createElement("div");
+        xyDiv.className = "gate-xy";
+        xyDiv.innerHTML = done + '/' + total + '<br><span class="xy-completed">completed</span>';
+        node.appendChild(xyDiv);
+      }
+    }
+    node.onclick = function() {
+      if (!currentProject) { document.getElementById("gateSelect").value = g; onGateChange(); return; }
+      if (i <= projectProgressGateIdx) {
+        // Navigate to past/current gate (view only)
+        document.getElementById("gateSelect").value = g;
+        onGateChange();
+      } else {
+        // Check if we can advance — all intermediate gates must be deviated
+        let canAdvance = true;
+        for (let j = projectProgressGateIdx + 1; j < i; j++) {
+          if (states[gateOrder[j]] !== 'deviated') { canAdvance = false; break; }
+        }
+        if (canAdvance) {
+          pendingAdvanceGate = g;
+          const skipMsg = (i > projectProgressGateIdx + 1)
+            ? "Skip deviated gate(s) and advance"
+            : "Advance project";
+          document.getElementById("advanceGateMsg").textContent =
+            skipMsg + " from " + currentGateValue + " to " + g + "?";
+          document.getElementById("advanceGateModal").classList.add("active");
+        } else {
+          showToast("Cannot skip non-deviated gates");
+        }
+      }
+    };
+    container.appendChild(node);
+
+    if (i < gateOrder.length - 1) {
+      const line = document.createElement("div");
+      line.className = "gate-line";
+      if (i < projectProgressGateIdx) line.classList.add('completed');
+      container.appendChild(line);
+    }
+  });
+}
+
+function rebuildGateDropdown() {
+  const sel = document.getElementById("gateSelect");
+  const cur = sel.value;
+  sel.innerHTML = "";
+  gateOrder.forEach(g => {
+    const o = document.createElement("option");
+    o.value = g;
+    o.textContent = g + (g === currentGateValue ? " (Current Gate)" : "");
+    sel.appendChild(o);
+  });
+  sel.value = cur || currentGateValue;
+}
+
+function confirmAdvanceGate() {
+  if (!pendingAdvanceGate || !currentProject) return;
+  document.getElementById("advanceGateModal").classList.remove("active");
+  fetch("/advance-gate", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project_id: currentProject, new_gate: pendingAdvanceGate })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === 'error') { showToast("Advance failed: " + data.detail); return; }
+    currentGateValue = pendingAdvanceGate;
+    projectProgressGateIdx = gateOrder.indexOf(currentGateValue);
+    document.getElementById("gateSelect").value = currentGateValue;
+    rebuildGateDropdown();
+    buildGateTimeline();
+    loadTaskData();
+    autoFillFromCriteria();
+    renderTable();
+    showToast("Advanced to " + currentGateValue);
+    pendingAdvanceGate = null;
+  })
+  .catch(err => showToast("Advance failed: " + err.message));
+}
+
+function closeAdvanceGateModal() {
+  document.getElementById("advanceGateModal").classList.remove("active");
+  pendingAdvanceGate = null;
+}
+
+function onGateChange() {
+  // Only changes the VIEW — does NOT affect project progress (blue state)
+  buildGateTimeline();
+  loadTaskData();
+  autoFillFromCriteria();
+  renderTable();
+}
+
+function onDeviationChange() {
+  const gate = document.getElementById("gateSelect").value;
+  const dev = document.getElementById("deviationSelect").value;
+  if (!currentProject) return;
+  if (!gateStates[currentProject]) gateStates[currentProject] = {};
+  if (dev === 'Yes') {
+    gateStates[currentProject][gate] = 'deviated';
+  } else {
+    // Remove deviated — gate will revert to completed (blue) if within progress
+    delete gateStates[currentProject][gate];
+  }
+  buildGateTimeline();
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  document.getElementById("toastMsg").textContent = msg || "Saved successfully";
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2500);
+}
+
+// ===== GATE CRITERIA =====
+const gateCriteria = {
+  "PCI": {
+    "Quality history & Lessons Learned": { expectedStatus: "Planned", completionLevel: "Product & process Quality statistics & history (e.g. Warranty, PIL's, Product audit) & lessons learned collected, summarized and reviewed." },
+    "Requirement Development": { expectedStatus: "Planned", completionLevel: "Initiate requirement definition and documentation based on prerequisites." },
+    "System Level Design FMEA": { expectedStatus: "Planned", completionLevel: "Task planned with start and finish dates + responsible to drive task identified." },
+    "Component Level Design FMEA": { expectedStatus: "To be planned before next gate.", completionLevel: "" },
+    "Review of supplier FMEA": { expectedStatus: "To be planned before next gate.", completionLevel: "" },
+    "Software Error Analysis (SWEA)": { expectedStatus: "To be planned before next gate.", completionLevel: "" },
+    "Special Characteristics": { expectedStatus: "Planned", completionLevel: "Task planned with start and finish dates + responsible to drive task identified." },
+    "Safety Part Identification": { expectedStatus: "Planned", completionLevel: "Task planned with start and finish dates + responsible to drive task identified." },
+    "Design For Assembly and Logistics": { expectedStatus: "To be planned before next gate.", completionLevel: "" },
+    "Design For Aftermarket": { expectedStatus: "To be planned before next gate.", completionLevel: "" },
+    "Concept Dashboard": { expectedStatus: "Planned", completionLevel: "Task planned with start and finish dates + responsible to drive task identified." },
+    "Verification and validation plan - components": { expectedStatus: "To be planned before next gate.", completionLevel: "" }
+  },
+  "FeG": {
+    "Quality history & Lessons Learned": { expectedStatus: "In Progress", completionLevel: "Product & process Quality statistics & history (e.g. Warranty, PIL's, Product audit) & lessons learned collected, summarized and reviewed. Used as input to FMEAs and Risk Register." },
+    "Requirement Development": { expectedStatus: "In Progress", completionLevel: "Based on prerequisites targets, feature requirements impact understood and preliminary feature requirements defined." },
+    "System Level Design FMEA": { expectedStatus: "Started", completionLevel: "System Boundary Diagram created and relevant needed FMEA's identified." },
+    "Component Level Design FMEA": { expectedStatus: "Planned", completionLevel: "Task planned with start and finish dates + responsible to drive task identified." },
+    "Review of supplier FMEA": { expectedStatus: "Planned", completionLevel: "Task planned with start and finish dates + responsible to drive task identified." },
+    "Software Error Analysis (SWEA)": { expectedStatus: "Planned", completionLevel: "Task planned with start and finish dates + responsible to drive task identified." },
+    "Special Characteristics": { expectedStatus: "Started", completionLevel: "List of special characteristics in carry over components and assemblies should be available." },
+    "Safety Part Identification": { expectedStatus: "Start/Complete", completionLevel: "List of safety parts in the scope of the project must be available, including carry over parts." },
+    "Design For Assembly and Logistics": { expectedStatus: "Planned", completionLevel: "Task planned with start and finish dates + responsible to drive task identified." },
+    "Design For Aftermarket": { expectedStatus: "Planned", completionLevel: "Task planned with start and finish dates + responsible to drive task identified." },
+    "Concept Dashboard": { expectedStatus: "Started", completionLevel: "Preparation for solution area level completed." },
+    "Verification and validation plan - components": { expectedStatus: "Planned", completionLevel: "Preliminary verification plan is initiated." },
+    "Product traceability (VDA update)": { expectedStatus: "To be planned before next gate.", completionLevel: "" },
+    "B, C and P release checklist": { expectedStatus: "To be planned before next gate.", completionLevel: "" },
+    "Design Review": { expectedStatus: "To be planned before next gate.", completionLevel: "" }
+  },
+  "CSG": {
+    "Quality history & Lessons Learned": { expectedStatus: "In Progress", completionLevel: "Actions from lessons learned and quality history identified and included in development plan." },
+    "Requirement Development": { expectedStatus: "In Progress", completionLevel: "Requirement balancing performed and requirements further broken down/detailed." },
+    "System Level Design FMEA": { expectedStatus: "In Progress", completionLevel: "1st rating of all identified failure modes is completed with defined recommended actions." },
+    "Component Level Design FMEA": { expectedStatus: "Started", completionLevel: "Component Boundary Diagrams and connected component level FMEAs are listed." },
+    "Review of supplier FMEA": { expectedStatus: "Started", completionLevel: "Supplier-FMEA reviews has been planned after supplier selection." },
+    "Software Error Analysis (SWEA)": { expectedStatus: "Started", completionLevel: "Preliminary Software Architectural Design (SAD) defined." },
+    "Special Characteristics": { expectedStatus: "In Progress", completionLevel: "Preliminary list of potential special characteristics developed." },
+    "Safety Part Identification": { expectedStatus: "Completed", completionLevel: "See [FeG]" },
+    "Design For Assembly and Logistics": { expectedStatus: "Started", completionLevel: "Preliminary list of key areas where DFA/DFL is to be performed available." },
+    "Design For Aftermarket": { expectedStatus: "Started", completionLevel: "Preliminary list of parts where DFAM is to be performed available." },
+    "Concept Dashboard": { expectedStatus: "In Progress", completionLevel: "Execution and analysis for solution area levels completed." },
+    "Review of Technical Specifications": { expectedStatus: "To be planned before next gate.", completionLevel: "" },
+    "Product Application Agreement": { expectedStatus: "To be planned before next gate.", completionLevel: "" },
+    "Verification and validation plan - components": { expectedStatus: "In Progress", completionLevel: "Verification activities are planned and performed to support concept development." },
+    "Product traceability (VDA update)": { expectedStatus: "Started", completionLevel: "List of item defined, needing traceability." },
+    "B, C and P release checklist": { expectedStatus: "Planned", completionLevel: "Task planned with start and finish dates + responsible to drive task identified." },
+    "Design Review": { expectedStatus: "Planned", completionLevel: "Task planned with start and finish dates + responsible to drive task identified." }
+  },
+  "CG": {
+    "Quality history & Lessons Learned": { expectedStatus: "In Progress", completionLevel: "Actions from lessons learned and quality history identified and included in development plan." },
+    "Requirement Development": { expectedStatus: "In Progress", completionLevel: "Requirement balancing performed and requirement documentation updated prior to A-release." },
+    "System Level Design FMEA": { expectedStatus: "In Progress", completionLevel: "Follow-up actions and potential design changes from S-FMEA." },
+    "Component Level Design FMEA": { expectedStatus: "In Progress", completionLevel: "1st rating of all identified failure modes is completed." },
+    "Review of supplier FMEA": { expectedStatus: "In Progress", completionLevel: "Review sessions of supplier-FMEA has been conducted." },
+    "Software Error Analysis (SWEA)": { expectedStatus: "In Progress", completionLevel: "Rating of all identified failure modes is complete." },
+    "Special Characteristics": { expectedStatus: "In Progress", completionLevel: "List of potential special characteristics available and included in FMEA." },
+    "Safety Part Identification": { expectedStatus: "Completed", completionLevel: "See [FeG]" },
+    "Design For Assembly and Logistics": { expectedStatus: "In Progress", completionLevel: "Updated list of key areas available." },
+    "Design For Aftermarket": { expectedStatus: "In Progress", completionLevel: "Updated list of parts where DFAM is to be performed." },
+    "Concept Dashboard": { expectedStatus: "Completed", completionLevel: "See [CSG]" },
+    "Review of Technical Specifications": { expectedStatus: "Planned", completionLevel: "Task planned." },
+    "Product Application Agreement": { expectedStatus: "Planned", completionLevel: "Task planned." },
+    "Verification and validation plan - components": { expectedStatus: "In Progress", completionLevel: "Verification activities performed to support concept selection." },
+    "Product traceability (VDA update)": { expectedStatus: "In Progress", completionLevel: "List of item with traceability need decided." },
+    "B, C and P release checklist": { expectedStatus: "In Progress", completionLevel: "Release checklist for B-release initiated." },
+    "Design Review": { expectedStatus: "Started", completionLevel: "Initial review for B-release performed." }
+  },
+  "DG": {
+    "Quality history & Lessons Learned": { expectedStatus: "In Progress", completionLevel: "Update DVG from product and project lessons learned." },
+    "Requirement Development": { expectedStatus: "In Progress", completionLevel: "Requirement documentation updated prior to B-release." },
+    "System Level Design FMEA": { expectedStatus: "In Progress", completionLevel: "2nd rating completed and residual risks reviewed." },
+    "Component Level Design FMEA": { expectedStatus: "In Progress", completionLevel: "Follow up recommended actions." },
+    "Review of supplier FMEA": { expectedStatus: "In Progress", completionLevel: "FMEA review report stored in Phoenix." },
+    "Software Error Analysis (SWEA)": { expectedStatus: "In Progress", completionLevel: "Actions followed-up and SW design changes completed." },
+    "Special Characteristics": { expectedStatus: "In Progress", completionLevel: "Special characteristics list released." },
+    "Safety Part Identification": { expectedStatus: "Completed", completionLevel: "See [FeG]" },
+    "Design For Assembly and Logistics": { expectedStatus: "In Progress", completionLevel: "DFA/DFL updated prior to B-release." },
+    "Design For Aftermarket": { expectedStatus: "In Progress", completionLevel: "DFAM updated prior to B-release." },
+    "Concept Dashboard": { expectedStatus: "Completed", completionLevel: "See [CSG]" },
+    "Review of Technical Specifications": { expectedStatus: "Started", completionLevel: "RTS distributed and reviewed." },
+    "Product Application Agreement": { expectedStatus: "Started", completionLevel: "PAA initiated for all SIPD 2/3 components." },
+    "Verification and validation plan - components": { expectedStatus: "In Progress", completionLevel: "All planned tests performed up to B-release." },
+    "Product traceability (VDA update)": { expectedStatus: "In Progress", completionLevel: "Flag part in KOLA." },
+    "B, C and P release checklist": { expectedStatus: "In Progress", completionLevel: "Release checklist for B-release completed." },
+    "Design Review": { expectedStatus: "In Progress", completionLevel: "Second review for B-release performed." }
+  },
+  "FDG": {
+    "Quality history & Lessons Learned": { expectedStatus: "In Progress", completionLevel: "Actions from lessons learned closed." },
+    "Requirement Development": { expectedStatus: "In Progress", completionLevel: "Requirement documentation updated prior to C-release." },
+    "System Level Design FMEA": { expectedStatus: "In Progress", completionLevel: "All actions followed up and S-FMEA updated." },
+    "Component Level Design FMEA": { expectedStatus: "In Progress", completionLevel: "2nd rating completed. Residual risks reviewed." },
+    "Review of supplier FMEA": { expectedStatus: "In Progress", completionLevel: "Residual risk review of supplier-FMEA." },
+    "Software Error Analysis (SWEA)": { expectedStatus: "In Progress", completionLevel: "Actions followed-up. SWEA updated." },
+    "Special Characteristics": { expectedStatus: "In Progress", completionLevel: "Special characteristics list updated and re-released." },
+    "Safety Part Identification": { expectedStatus: "Completed", completionLevel: "See [FeG]" },
+    "Design For Assembly and Logistics": { expectedStatus: "Completed", completionLevel: "DFA/DFL Completed prior to C-release." },
+    "Design For Aftermarket": { expectedStatus: "Completed", completionLevel: "DFAM Completed prior to C-release." },
+    "Concept Dashboard": { expectedStatus: "Completed", completionLevel: "See [CSG]" },
+    "Review of Technical Specifications": { expectedStatus: "In Progress", completionLevel: "RTS signed at C-release." },
+    "Product Application Agreement": { expectedStatus: "In Progress", completionLevel: "PAA meetings planned." },
+    "Verification and validation plan - components": { expectedStatus: "In Progress", completionLevel: "All tests performed up to C-release." },
+    "Product traceability (VDA update)": { expectedStatus: "In Progress", completionLevel: "Specify identification in KOLA." },
+    "B, C and P release checklist": { expectedStatus: "In Progress", completionLevel: "Release checklist for C-release completed." },
+    "Design Review": { expectedStatus: "In Progress", completionLevel: "Review for C-release performed." }
+  },
+  "FIG": {
+    "Quality history & Lessons Learned": { expectedStatus: "In Progress", completionLevel: "Update DVG." },
+    "Requirement Development": { expectedStatus: "Completed", completionLevel: "Requirement documentation updated prior to P-release." },
+    "System Level Design FMEA": { expectedStatus: "In Progress", completionLevel: "All actions followed up." },
+    "Component Level Design FMEA": { expectedStatus: "In Progress", completionLevel: "All actions followed up in D-FMEA." },
+    "Review of supplier FMEA": { expectedStatus: "In Progress", completionLevel: "Update supplier-FMEA review report if needed." },
+    "Software Error Analysis (SWEA)": { expectedStatus: "In Progress", completionLevel: "Actions followed-up. SWEA updated." },
+    "Special Characteristics": { expectedStatus: "Completed", completionLevel: "Production control methods verified." },
+    "Safety Part Identification": { expectedStatus: "Completed", completionLevel: "See [FeG]" },
+    "Design For Assembly and Logistics": { expectedStatus: "Completed", completionLevel: "See [FDG]" },
+    "Design For Aftermarket": { expectedStatus: "Completed", completionLevel: "See [FDG]" },
+    "Concept Dashboard": { expectedStatus: "Completed", completionLevel: "See [CSG]" },
+    "Review of Technical Specifications": { expectedStatus: "Completed", completionLevel: "Final RTS signed at P-release." },
+    "Product Application Agreement": { expectedStatus: "In Progress", completionLevel: "PAA signed for key components." },
+    "Verification and validation plan - components": { expectedStatus: "Completed", completionLevel: "All verification completed for P-release." },
+    "Product traceability (VDA update)": { expectedStatus: "In Progress", completionLevel: "All systems prepared for traceability." },
+    "B, C and P release checklist": { expectedStatus: "Completed", completionLevel: "P-release checklist completed." },
+    "Design Review": { expectedStatus: "Completed", completionLevel: "Review for P-release completed." }
+  },
+  "RG": {
+    "Quality history & Lessons Learned": { expectedStatus: "In Progress", completionLevel: "DVG Completed and stored." },
+    "Requirement Development": { expectedStatus: "Completed", completionLevel: "See [FIG]" },
+    "System Level Design FMEA": { expectedStatus: "Completed", completionLevel: "All S-FMEA actions closed." },
+    "Component Level Design FMEA": { expectedStatus: "Completed", completionLevel: "All D-FMEA actions closed." },
+    "Review of supplier FMEA": { expectedStatus: "In Progress", completionLevel: "Update if needed." },
+    "Software Error Analysis (SWEA)": { expectedStatus: "Completed", completionLevel: "All actions closed." },
+    "Special Characteristics": { expectedStatus: "Completed", completionLevel: "See [FIG]" },
+    "Safety Part Identification": { expectedStatus: "Completed", completionLevel: "See [FeG]" },
+    "Design For Assembly and Logistics": { expectedStatus: "Completed", completionLevel: "See [FDG]" },
+    "Design For Aftermarket": { expectedStatus: "Completed", completionLevel: "See [FDG]" },
+    "Concept Dashboard": { expectedStatus: "Completed", completionLevel: "See [CG]" },
+    "Review of Technical Specifications": { expectedStatus: "Completed", completionLevel: "See [FIG]" },
+    "Product Application Agreement": { expectedStatus: "Completed", completionLevel: "PAA signed for non-key components." },
+    "Verification and validation plan - components": { expectedStatus: "Completed", completionLevel: "See [FIG]" },
+    "Product traceability (VDA update)": { expectedStatus: "Completed", completionLevel: "All systems used for traceability." },
+    "B, C and P release checklist": { expectedStatus: "Completed", completionLevel: "See [FIG]" },
+    "Design Review": { expectedStatus: "Completed", completionLevel: "See [FIG]" }
+  },
+  "EG": {
+    "Quality history & Lessons Learned": { expectedStatus: "Completed", completionLevel: "See [RG]" },
+    "Requirement Development": { expectedStatus: "Completed", completionLevel: "See [FIG]" },
+    "System Level Design FMEA": { expectedStatus: "Completed", completionLevel: "See [RG]" },
+    "Component Level Design FMEA": { expectedStatus: "Completed", completionLevel: "See [RG]" },
+    "Review of supplier FMEA": { expectedStatus: "Completed", completionLevel: "See [RG]" },
+    "Software Error Analysis (SWEA)": { expectedStatus: "Completed", completionLevel: "See [RG]" },
+    "Special Characteristics": { expectedStatus: "Completed", completionLevel: "See [FIG]" },
+    "Safety Part Identification": { expectedStatus: "Completed", completionLevel: "See [FeG]" },
+    "Design For Assembly and Logistics": { expectedStatus: "Completed", completionLevel: "See [FDG]" },
+    "Design For Aftermarket": { expectedStatus: "Completed", completionLevel: "See [FDG]" },
+    "Concept Dashboard": { expectedStatus: "Completed", completionLevel: "See [CG]" },
+    "Review of Technical Specifications": { expectedStatus: "Completed", completionLevel: "See [FIG]" },
+    "Product Application Agreement": { expectedStatus: "Completed", completionLevel: "See [RG]" },
+    "Verification and validation plan - components": { expectedStatus: "Completed", completionLevel: "See [FIG]" },
+    "Product traceability (VDA update)": { expectedStatus: "Completed", completionLevel: "See [RG]" },
+    "B, C and P release checklist": { expectedStatus: "Completed", completionLevel: "See [FIG]" },
+    "Design Review": { expectedStatus: "Completed", completionLevel: "See [FIG]" }
+  }
+};
+
+function autoFillFromCriteria() {
+  const gate = document.getElementById("gateSelect").value;
+  const task = document.getElementById("qualityTask").value;
+  if (gateCriteria[gate] && gateCriteria[gate][task]) {
+    const c = gateCriteria[gate][task];
+    document.getElementById("expectedStatus").value = c.expectedStatus || "";
+    document.getElementById("completionLevel").value = c.completionLevel || "";
+  }
+}
+
+// ===== ENGINEERS =====
+let engineerMaster = [];
+
+function loadEngineers() {
+  const stored = localStorage.getItem("engineerMaster");
+  if (stored) engineerMaster = JSON.parse(stored);
+  populateEngineerDropdown("qualityEngineer");
+  populateEngineerDropdown("responsibleEngineer");
+  fetch("/engineers")
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.engineers) {
+        data.engineers.forEach(name => { if (!engineerMaster.includes(name)) engineerMaster.push(name); });
+        localStorage.setItem("engineerMaster", JSON.stringify(engineerMaster));
+        populateEngineerDropdown("qualityEngineer");
+        populateEngineerDropdown("responsibleEngineer");
+        populateLoginDropdown();
+      }
+    })
+    .catch(err => { console.warn("Engineer sync failed:", err); populateLoginDropdown(); });
+}
+
+function populateEngineerDropdown(selectId) {
+  const dd = document.getElementById(selectId);
+  const cur = dd.value;
+  dd.innerHTML = '<option value="">Select Engineer</option>';
+  const sorted = [...engineerMaster].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  sorted.forEach(name => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name;
+    dd.appendChild(o);
+  });
+  if (cur) dd.value = cur;
+  // Also refresh user filter
+  const userSel = document.getElementById('currentUserSelect');
+  if (userSel) {
+    const cu = userSel.value;
+    userSel.innerHTML = '<option value="">All Engineers (No Filter)</option>';
+    sorted.forEach(name => { const o = document.createElement('option'); o.value = name; o.textContent = name; userSel.appendChild(o); });
+    if (cu) userSel.value = cu;
+  }
+}
+
+let _modalTargetSelect = null;
+function openEngineerModal(selectId) {
+  _modalTargetSelect = selectId;
+  document.getElementById("newEngineerInput").value = "";
+  document.getElementById("engineerModal").classList.add("active");
+  setTimeout(() => document.getElementById("newEngineerInput").focus(), 50);
+}
+function closeEngineerModal() { document.getElementById("engineerModal").classList.remove("active"); _modalTargetSelect = null; }
+function confirmAddEngineer() {
+  const newName = document.getElementById("newEngineerInput").value.trim();
+  if (!newName) return;
+  if (!engineerMaster.includes(newName)) {
+    engineerMaster.push(newName);
+    localStorage.setItem("engineerMaster", JSON.stringify(engineerMaster));
+    fetch("/save-engineer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newName }) }).catch(err => console.warn("Engineer save failed:", err));
+  }
+  populateEngineerDropdown("qualityEngineer");
+  populateEngineerDropdown("responsibleEngineer");
+  if (_modalTargetSelect) document.getElementById(_modalTargetSelect).value = newName;
+  closeEngineerModal();
+}
+
+// ===== ITEM MODAL =====
+function openItemModal() {
+  document.getElementById("newItemInput").value = "";
+  document.getElementById("itemModal").classList.add("active");
+  setTimeout(() => document.getElementById("newItemInput").focus(), 50);
+}
+function closeItemModal() { document.getElementById("itemModal").classList.remove("active"); }
+function confirmAddItem() {
+  const name = document.getElementById("newItemInput").value.trim();
+  if (!name) return;
+  if (!currentProject) { showToast("Enter a Project ID first"); closeItemModal(); return; }
+  if (!store[currentProject]) store[currentProject] = {};
+  if (!store[currentProject][name]) store[currentProject][name] = {};
+  const sel = document.getElementById("itemSelect");
+  // Check if already exists
+  let exists = false;
+  for (let i = 0; i < sel.options.length; i++) { if (sel.options[i].value === name) { exists = true; break; } }
+  if (!exists) { const o = document.createElement("option"); o.value = o.text = name; sel.add(o); }
+  sel.value = name;
+  document.getElementById("itemName").value = name;
+  closeItemModal();
+}
+
+// ===== QUALITY TASKS =====
+const qualityTasks = [
+  "Quality history & Lessons Learned","Requirement Development","System Level Design FMEA",
+  "Component Level Design FMEA","Review of supplier FMEA","Software Error Analysis (SWEA)",
+  "Special Characteristics","Safety Part Identification","Design For Assembly and Logistics",
+  "Design For Aftermarket","Concept Dashboard","Verification and validation plan - components",
+  "Product traceability (VDA update)","B, C and P release checklist","Design Review",
+  "Review of Technical Specifications","Product Application Agreement"
+];
+
+let store = {}, currentProject = "";
+
+// ===== INIT =====
+window.onload = function () {
+  if (localStorage.getItem('darkMode') === '1') {
+    document.body.classList.add('dark');
+    const icon = document.getElementById('darkIcon');
+    if (icon) icon.innerHTML = '<circle cx="8" cy="8" r="3.5" fill="currentColor"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.3 3.3l1.4 1.4M11.3 11.3l1.4 1.4M3.3 12.7l1.4-1.4M11.3 4.7l1.4-1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>';
+  }
+  qualityTasks.forEach(t => {
+    let o = document.createElement("option"); o.value = o.text = t;
+    document.getElementById("qualityTask").add(o);
+  });
+  loadEngineers();
+  buildGateTimeline();
+};
+
+// ===== LOADING =====
+let _progressInterval = null, _stepInterval = null, _progressValue = 0;
+function updateProgress(pct) {
+  const circle = document.getElementById('progressCircle');
+  const text = document.getElementById('progressText');
+  if (!circle || !text) return;
+  const circ = 2 * Math.PI * 34;
+  circle.style.strokeDashoffset = circ - (pct / 100) * circ;
+  text.textContent = Math.round(pct) + '%';
+}
+function showLoading(msg) {
+  _progressValue = 0; updateProgress(0);
+  document.getElementById('loadingMsg').textContent = msg || 'Loading project data...';
+  document.getElementById('loadingStep').textContent = '';
+  document.getElementById("loadingOverlay").classList.add("active");
+  if (_stepInterval) { clearInterval(_stepInterval); _stepInterval = null; }
+  _progressInterval = setInterval(function() {
+    if (_progressValue < 90) { _progressValue += Math.random() * 8 + 2; if (_progressValue > 90) _progressValue = 90; updateProgress(_progressValue); }
+  }, 300);
+}
+function setLoadingStep(step) {
+  const el = document.getElementById('loadingStep');
+  if (el) { el.style.opacity = '0'; setTimeout(function(){ el.textContent = step; el.style.opacity = '1'; }, 150); }
+}
+function hideLoading() {
+  if (_progressInterval) { clearInterval(_progressInterval); _progressInterval = null; }
+  if (_stepInterval) { clearInterval(_stepInterval); _stepInterval = null; }
+  updateProgress(100);
+  setLoadingStep('Done!');
+  setTimeout(function() { document.getElementById("loadingOverlay").classList.remove("active"); _progressValue = 0; updateProgress(0); }, 500);
+}
+
+// ===== LOAD PROJECT =====
+function loadProject() {
+  currentProject = document.getElementById("projectId").value.trim();
+  if (!currentProject) return;
+  if (!store[currentProject]) store[currentProject] = {};
+
+  showLoading('Loading project data...');
+  setLoadingStep('Fetching tasks from database \u2026');
+
+  fetch("/project/" + encodeURIComponent(currentProject))
+    .then(res => res.json())
+    .then(data => {
+      // Read current_gate from backend response
+      currentGateValue = data.current_gate || "PCI";
+
+      if (data && data.data && data.data.length > 0) {
+        store[currentProject] = {};
+        gateStates[currentProject] = {};
+
+        data.data.forEach(r => {
+          if (!store[currentProject][r.item]) store[currentProject][r.item] = {};
+          if (!store[currentProject][r.item][r.quality_task]) {
+            store[currentProject][r.item][r.quality_task] = { gates: {} };
+          }
+          const t = store[currentProject][r.item][r.quality_task];
+          t.qe = r.quality_engineer || t.qe || "";
+          t.resp = r.responsible_engineer || t.resp || "";
+          t.gates[r.gate] = {
+            expected_status: r.expected_status || "",
+            actual_status: r.actual_status || "",
+            rating: r.rating || "",
+            followup_week: r.followup_week || "",
+            planned_start: r.planned_start || "",
+            planned_end: r.planned_end || "",
+            completion_level: r.completion_level || "",
+            comments: r.comments || "",
+            deviation: r.deviation || "No",
+            deviation_text: r.deviation_text || ""
+          };
+          if (r.next_gate) t.next_gate = r.next_gate;
+          if (r.deviation === "Yes") {
+            gateStates[currentProject][r.gate] = 'deviated';
+          }
+        });
+      }
+
+      // Set project progress from current_gate (from SQL — used by Power BI)
+      projectProgressGateIdx = gateOrder.indexOf(currentGateValue);
+      if (projectProgressGateIdx === -1) projectProgressGateIdx = 0;
+
+      // Set gate dropdown to current gate and rebuild labels
+      document.getElementById("gateSelect").value = currentGateValue;
+      rebuildGateDropdown();
+
+      // Populate item dropdown
+      const itemSelect = document.getElementById("itemSelect");
+      itemSelect.innerHTML = "";
+      Object.keys(store[currentProject]).forEach(i => {
+        let o = document.createElement("option"); o.value = o.text = i; itemSelect.add(o);
+      });
+      if (itemSelect.options.length > 0) {
+        document.getElementById("itemName").value = itemSelect.options[0].value;
+      }
+
+      // Set next gate start date if available
+      const firstItem = Object.keys(store[currentProject])[0];
+      const firstTask = firstItem ? Object.keys(store[currentProject][firstItem])[0] : null;
+      if (firstTask && store[currentProject][firstItem][firstTask].next_gate) {
+        document.getElementById("nextGateStartDate").value = store[currentProject][firstItem][firstTask].next_gate;
+      }
+
+      setLoadingStep('Building gate timeline \u2026');
+      buildGateTimeline();
+      loadTaskData();
+      setLoadingStep('Rendering task table \u2026');
+      renderTable();
+      hideLoading();
+      showToast("Project loaded — Current Gate: " + currentGateValue);
+    })
+    .catch(err => {
+      console.error("Load failed:", err);
+      hideLoading();
+      renderTable();
+    });
+}
+
+// ===== LOAD TASK DATA INTO FORM =====
+function loadTaskData() {
+  const item = document.getElementById("itemName").value || (document.getElementById("itemSelect").value);
+  const task = document.getElementById("qualityTask").value;
+  const gate = document.getElementById("gateSelect").value;
+  if (!item || !task || !currentProject) return;
+
+  const t = store[currentProject]?.[item]?.[task];
+  if (!t) return;
+
+  document.getElementById("qualityEngineer").value = t.qe || "";
+  document.getElementById("responsibleEngineer").value = t.resp || "";
+  document.getElementById("nextGateStartDate").value = t.next_gate || "";
+
+  const gd = t.gates?.[gate] || {};
+  document.getElementById("expectedStatus").value = gd.expected_status || "Planned";
+  document.getElementById("actualStatus").value = gd.actual_status || "Following Plan";
+  document.getElementById("rating").value = gd.rating || "Green";
+  document.getElementById("followUpWeek").value = gd.followup_week || "";
+  document.getElementById("plannedStart").value = gd.planned_start || "";
+  document.getElementById("plannedEnd").value = gd.planned_end || "";
+  document.getElementById("completionLevel").value = gd.completion_level || "";
+  document.getElementById("comments").value = gd.comments || "";
+  document.getElementById("deviationSelect").value = gd.deviation || "No";
+  document.getElementById("deviationText").value = gd.deviation_text || "";
+}
+
+// ===== SAVE TASK =====
+function saveTask() {
+  const item = document.getElementById("itemName").value || document.getElementById("itemSelect").value;
+  const task = document.getElementById("qualityTask").value;
+  if (!item || !task) { showToast("Select an item and quality task"); return; }
+  if (!currentProject) { showToast("Enter a Project ID first"); return; }
+
+  const checkFields = [
+    { id: 'qualityEngineer', label: 'Quality Engineer' },
+    { id: 'responsibleEngineer', label: 'Responsible Engineer' },
+    { id: 'followUpWeek', label: 'Follow-up Week' },
+    { id: 'plannedStart', label: 'Planned Start' },
+    { id: 'plannedEnd', label: 'Planned End' }
+  ];
+  const filled = checkFields.filter(f => document.getElementById(f.id).value);
+  const missing = checkFields.filter(f => !document.getElementById(f.id).value);
+  if (filled.length > 0 && missing.length > 0) {
+    document.getElementById('confirmSaveMsg').innerHTML = '<strong>Missing:</strong> ' + missing.map(f => f.label).join(', ') + '.<br>Do you still want to save this task?';
+    document.getElementById('confirmSaveModal').classList.add('active');
+    return;
+  }
+  executeSave();
+}
+function forceSaveTask() { document.getElementById('confirmSaveModal').classList.remove('active'); executeSave(); }
+function closeConfirmSave() { document.getElementById('confirmSaveModal').classList.remove('active'); }
+
+function executeSave() {
+  const item = document.getElementById("itemName").value || document.getElementById("itemSelect").value;
+  const task = document.getElementById("qualityTask").value;
+  const gate = document.getElementById("gateSelect").value;
+  if (!item || !task || !currentProject) return;
+
+  // N/A auto-deviation logic
+  const actualStatus = document.getElementById("actualStatus").value;
+  const rating = document.getElementById("rating").value;
+  if (actualStatus === "N/A" || rating === "N/A") {
+    document.getElementById("deviationSelect").value = "Yes";
+    if (!gateStates[currentProject]) gateStates[currentProject] = {};
+    gateStates[currentProject][gate] = 'deviated';
+  }
+
+  // Capture old values for audit
+  const oldGd = store[currentProject]?.[item]?.[task]?.gates?.[gate] || {};
+  const oldValues = {
+    actual_status: oldGd.actual_status || "",
+    rating: oldGd.rating || "",
+    expected_status: oldGd.expected_status || "",
+    deviation: oldGd.deviation || "No"
+  };
+
+  // Update local store
+  if (!store[currentProject]) store[currentProject] = {};
+  if (!store[currentProject][item]) {
+    store[currentProject][item] = {};
+    const sel = document.getElementById("itemSelect");
+    let exists = false;
+    for (let i = 0; i < sel.options.length; i++) { if (sel.options[i].value === item) { exists = true; break; } }
+    if (!exists) { const o = document.createElement("option"); o.value = o.text = item; sel.add(o); }
+  }
+  if (!store[currentProject][item][task]) {
+    store[currentProject][item][task] = { gates: {} };
+  }
+  const t = store[currentProject][item][task];
+  t.qe = document.getElementById("qualityEngineer").value;
+  t.resp = document.getElementById("responsibleEngineer").value;
+  t.next_gate = document.getElementById("nextGateStartDate").value;
+  t.gates[gate] = {
+    expected_status: document.getElementById("expectedStatus").value,
+    actual_status: document.getElementById("actualStatus").value,
+    rating: document.getElementById("rating").value,
+    followup_week: document.getElementById("followUpWeek").value,
+    planned_start: document.getElementById("plannedStart").value,
+    planned_end: document.getElementById("plannedEnd").value,
+    completion_level: document.getElementById("completionLevel").value,
+    comments: document.getElementById("comments").value,
+    deviation: document.getElementById("deviationSelect").value,
+    deviation_text: document.getElementById("deviationText").value
+  };
+
+  // Compute changes for audit
+  const newGd = t.gates[gate];
+  const changes = {};
+  ["actual_status","rating","expected_status","deviation"].forEach(f => {
+    if (oldValues[f] !== newGd[f]) changes[f] = [oldValues[f], newGd[f]];
+  });
+  if (Object.keys(changes).length) logAudit(currentProject, item, task, gate, changes);
+
+  renderTable();
+  buildGateTimeline();
+
+  // Send to backend
+  const taskData = {
+    project_id: currentProject,
+    item: item,
+    quality_task: task,
+    gate: gate,
+    quality_engineer: t.qe,
+    responsible_engineer: t.resp,
+    expected_status: document.getElementById("expectedStatus").value,
+    actual_status: document.getElementById("actualStatus").value,
+    rating: document.getElementById("rating").value,
+    followup_week: document.getElementById("followUpWeek").value,
+    planned_start: document.getElementById("plannedStart").value,
+    planned_end: document.getElementById("plannedEnd").value,
+    completion_level: document.getElementById("completionLevel").value,
+    comments: document.getElementById("comments").value,
+    next_gate: document.getElementById("nextGateStartDate").value,
+    deviation: document.getElementById("deviationSelect").value,
+    deviation_text: document.getElementById("deviationText").value
+  };
+  fetch("/save-task", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(taskData)
+  })
+  .then(res => { if (!res.ok) return res.text().then(t => { throw new Error(t); }); return res.json(); })
+  .then(data => {
+    if (data.status === 'error') { showToast('Save error: ' + data.detail); console.error('Save error:', data.detail); return; }
+    console.log("Saved:", data); showToast("Task saved successfully");
+    // Auto-advance if deviation=Yes on the current gate
+    const savedGate = document.getElementById("gateSelect").value;
+    const savedDev = document.getElementById("deviationSelect").value;
+    if (savedDev === 'Yes' && savedGate === currentGateValue) {
+      const nextIdx = gateOrder.indexOf(currentGateValue) + 1;
+      if (nextIdx < gateOrder.length) {
+        const nextG = gateOrder[nextIdx];
+        fetch("/advance-gate", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ project_id: currentProject, new_gate: nextG })
+        }).then(r => r.json()).then(d => {
+          if (d.status !== 'error') {
+            currentGateValue = nextG;
+            projectProgressGateIdx = gateOrder.indexOf(currentGateValue);
+            document.getElementById("gateSelect").value = currentGateValue;
+            rebuildGateDropdown();
+            buildGateTimeline();
+            loadTaskData();
+            renderTable();
+            showToast("Gate deviated \u2014 advanced to " + currentGateValue);
+          }
+        });
+      }
+    }
+  })
+  .catch(err => { console.error("Save failed:", err); showToast("Save failed: " + err.message); });
+}
+
+// ===== TABLE RENDERING =====
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function ratingBadge(rating) {
+  const map = { "Green": "badge-green", "Yellow": "badge-yellow", "Red": "badge-red", "N/A": "badge-gray" };
+  const cls = map[rating] || "badge-gray";
+  return '<span class="badge ' + cls + '"><span class="badge-dot"></span>' + escHtml(rating || '-') + '</span>';
+}
+
+function truncCell(text, maxLen) {
+  if (!text || text === '-') return '-';
+  const safe = escHtml(text);
+  const display = text.length > maxLen ? escHtml(text.substring(0, maxLen)) + '...' : safe;
+  return '<span class="tooltip-wrap" title="' + safe.replace(/"/g, '&quot;') + '"><span class="tooltip-text">' + display + '</span><span class="tooltip-full">' + safe.replace(/\n/g, '<br>') + '</span></span>';
+}
+
+function renderTable() {
+  const taskTable = document.getElementById("taskTable");
+  taskTable.innerHTML = "";
+  const gate = document.getElementById("gateSelect").value;
+  const filterUser = document.getElementById("currentUserSelect") ? document.getElementById("currentUserSelect").value : "";
+
+  Object.keys(store[currentProject] || {}).forEach(item => {
+    Object.keys(store[currentProject][item]).forEach(task => {
+      const t = store[currentProject][item][task];
+      // Role-based filter
+      if (filterUser && t.qe !== filterUser && t.resp !== filterUser) return;
+
+      // Show the row for the currently selected gate
+      const gd = t.gates?.[gate] || {};
+      const hasFilled = gd.expected_status || gd.actual_status || gd.rating;
+
+      let r = taskTable.insertRow();
+      r.style.cursor = 'pointer';
+      r.setAttribute('data-clickable', 'true');
+      r.onclick = function(e) {
+        if (e.target.closest('.btn-delete')) return;
+        document.getElementById("itemSelect").value = item;
+        document.getElementById("itemName").value = item;
+        document.getElementById("qualityTask").value = task;
+        loadTaskData();
+        autoFillFromCriteria();
+        document.querySelector('.card:nth-child(2)').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+      r.innerHTML =
+        '<td style="font-weight:600;">' + escHtml(currentProject) + '</td>' +
+        '<td>' + escHtml(item) + '</td>' +
+        '<td>' + escHtml(task) + '</td>' +
+        '<td><span class="badge badge-gray">' + escHtml(gate) + '</span></td>' +
+        '<td>' + escHtml(t.qe || '-') + '</td>' +
+        '<td>' + escHtml(t.resp || '-') + '</td>' +
+        '<td>' + (hasFilled ? escHtml(gd.expected_status || '-') : '-') + '</td>' +
+        '<td>' + (hasFilled ? escHtml(gd.actual_status || '-') : '-') + '</td>' +
+        '<td>' + (hasFilled ? ratingBadge(gd.rating) : '-') + '</td>' +
+        '<td>' + truncCell(gd.completion_level || '-', 25) + '</td>' +
+        '<td>' + truncCell(gd.deviation_text || '-', 25) + '</td>' +
+        '<td>' + (hasFilled ? escHtml(gd.followup_week || '-') : '-') + '</td>' +
+        '<td>' + (hasFilled ? escHtml(gd.planned_start || '-') : '-') + '</td>' +
+        '<td>' + (hasFilled ? escHtml(gd.planned_end || '-') : '-') + '</td>' +
+        '<td>' + truncCell(gd.comments || '-', 30) + '</td>' +
+        '<td style="text-align:center;"><button class="btn-delete" title="Delete task" data-item="' + escHtml(item) + '" data-task="' + escHtml(task) + '" data-gate="' + escHtml(gate) + '"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 4h8M5.5 4V3a1 1 0 011-1h1a1 1 0 011 1v1M6 6.5v3M8 6.5v3M4 4l.5 7a1 1 0 001 1h3a1 1 0 001-1L10 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td>';
+    });
+  });
+}
+
+// ===== DELETE =====
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.btn-delete');
+  if (!btn) return;
+  const item = btn.dataset.item, task = btn.dataset.task, gate = btn.dataset.gate;
+  if (!item || !task) return;
+  if (!confirm('Delete "' + task + '" (gate: ' + gate + ') for item "' + item + '"?')) return;
+
+  if (store[currentProject] && store[currentProject][item] && store[currentProject][item][task]) {
+    if (store[currentProject][item][task].gates) delete store[currentProject][item][task].gates[gate];
+    const remaining = Object.keys(store[currentProject][item][task].gates || {});
+    if (remaining.length === 0) {
+      delete store[currentProject][item][task];
+      if (Object.keys(store[currentProject][item]).length === 0) {
+        delete store[currentProject][item];
+        const sel = document.getElementById("itemSelect");
+        for (let i = 0; i < sel.options.length; i++) { if (sel.options[i].value === item) { sel.remove(i); break; } }
+      }
+    }
+    renderTable();
+    showToast('Task deleted');
+
+    // Actually delete from SQL
+    fetch("/delete-task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project_id: currentProject, item: item, quality_task: task, gate: gate })
+    }).catch(err => console.warn("Delete sync failed:", err));
+  }
+});
+
+// ===== DARK MODE =====
+function toggleDarkMode() {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  const icon = document.getElementById('darkIcon');
+  if (icon) {
+    icon.innerHTML = isDark
+      ? '<circle cx="8" cy="8" r="3.5" fill="currentColor"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.3 3.3l1.4 1.4M11.3 11.3l1.4 1.4M3.3 12.7l1.4-1.4M11.3 4.7l1.4-1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>'
+      : '<path d="M14 8.5A6.5 6.5 0 017.5 2 5.5 5.5 0 1014 8.5z" fill="currentColor"/>';
+  }
+  localStorage.setItem('darkMode', isDark ? '1' : '0');
+}
+
+// ===== UPLOAD QTP =====
+function uploadQTP(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';  // reset so same file can be re-uploaded
+
+  showLoading('Uploading QTP Excel...');
+
+  // Cycle through transformation steps while waiting
+  const steps = [
+    'Reading Excel file \u2026',
+    'Detecting QTP sheet \u2026',
+    'Extracting project metadata \u2026',
+    'Parsing task rows \u2026',
+    'Resolving merged cells \u2026',
+    'Validating dates & fields \u2026',
+    'Saving engineers to database \u2026',
+    'Inserting tasks (9 gates each) \u2026',
+    'Finalizing import \u2026'
+  ];
+  let stepIdx = 0;
+  setLoadingStep(steps[0]);
+  _stepInterval = setInterval(function() {
+    stepIdx++;
+    if (stepIdx < steps.length) { setLoadingStep(steps[stepIdx]); }
+    else { clearInterval(_stepInterval); _stepInterval = null; }
+  }, 1200);
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  fetch('/upload-qtp', {
+    method: 'POST',
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    hideLoading();
+    if (data.status === 'ok') {
+      showToast('\u2705 Imported ' + data.tasks_imported + ' tasks (' + data.tasks_new + ' new, ' + data.tasks_updated + ' updated) for ' + data.project_id);
+      // Auto-load the project
+      document.getElementById('projectId').value = data.project_id;
+      loadProject();
+    } else {
+      showToast('\u274c Upload failed: ' + (data.detail || 'Unknown error'));
+    }
+  })
+  .catch(err => {
+    hideLoading();
+    showToast('\u274c Upload error: ' + err.message);
+  });
+}
+
+// ===== TOOLTIP POSITIONING =====
+document.addEventListener('mousemove', function(e) {
+  const wrap = e.target.closest('.tooltip-wrap');
+  if (!wrap) return;
+  const tip = wrap.querySelector('.tooltip-full');
+  if (!tip) return;
+  tip.style.display = 'block';
+  let x = e.clientX + 12, y = e.clientY - 10;
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  if (x + tw > window.innerWidth - 8) x = e.clientX - tw - 12;
+  if (y - th < 4) y = e.clientY + 18; else y = y - th;
+  tip.style.left = x + 'px';
+  tip.style.top = y + 'px';
+});
+document.addEventListener('mouseout', function(e) {
+  const wrap = e.target.closest('.tooltip-wrap');
+  if (!wrap) return;
+  const related = e.relatedTarget;
+  if (related && wrap.contains(related)) return;
+  const tip = wrap.querySelector('.tooltip-full');
+  if (tip) tip.style.display = 'none';
+});
+
+// ===== ROLE FILTER =====
+let _lastFilterUser = '';
+function onUserFilterChange() {
+  const btn = document.getElementById('myTasksBtn');
+  const sel = document.getElementById('currentUserSelect');
+  if (sel.value) { btn.classList.add('active'); _lastFilterUser = sel.value; } else { btn.classList.remove('active'); }
+  renderTable();
+}
+function toggleMyTasks() {
+  const btn = document.getElementById('myTasksBtn');
+  const sel = document.getElementById('currentUserSelect');
+  if (sel.value) { _lastFilterUser = sel.value; sel.value = ''; btn.classList.remove('active'); }
+  else {
+    if (_lastFilterUser) sel.value = _lastFilterUser;
+    else if (engineerMaster.length) { const s = [...engineerMaster].sort((a,b)=>a.localeCompare(b)); sel.value = s[0]; _lastFilterUser = s[0]; }
+    if (sel.value) btn.classList.add('active');
+  }
+  renderTable();
+}
+</script>
+
+<!-- ==================== ADVANCE GATE CONFIRMATION ==================== -->
+<div class="confirm-overlay" id="advanceGateModal" onclick="if(event.target===this)closeAdvanceGateModal()">
+  <div class="confirm-card">
+    <div class="confirm-icon" style="background: var(--accent-light);">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <p class="confirm-title">Advance Gate</p>
+    <p class="confirm-subtitle" id="advanceGateMsg">Move project to the next gate?</p>
+    <div class="confirm-actions">
+      <button class="btn-confirm-no" onclick="closeAdvanceGateModal()">Cancel</button>
+      <button class="btn-confirm-yes" onclick="confirmAdvanceGate()">Advance</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
+
