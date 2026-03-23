@@ -910,6 +910,13 @@ function isTaskNA(gd) {
   return as === "n/a" || r === "n/a";
 }
 
+function isTaskDeviated(gd) {
+  const as = (gd.actual_status || "").trim();
+  const r = (gd.rating || "").trim();
+  // Deviated if: actual_status=N/A, OR rating=N/A, OR both are empty/unfilled
+  return as.toLowerCase() === "n/a" || r.toLowerCase() === "n/a" || (as === "" && r === "");
+}
+
 function computeDashboard() {
   const proj = store[currentProject] || {};
   const gate = currentGateValue;
@@ -930,7 +937,7 @@ function computeDashboard() {
     else if (rating === "Green") green++;
     else if (rating === "Yellow") yellow++;
     else if (rating === "Red") red++;
-    if (gd.deviation === "Yes") dev++;
+    if (isTaskDeviated(gd)) dev++;
 
     // x = only Completed (N/A does not count)
     if (isTaskCompleted(gd)) curDone++;
@@ -1019,7 +1026,7 @@ function computeBreakdown(id) {
     gateOrder.forEach(g => {
       let count=0;
       Object.values(proj).forEach(itemObj => Object.values(itemObj).forEach(t => {
-        if (t.gates?.[g]?.deviation === "Yes") count++;
+        if (isTaskDeviated(t.gates?.[g] || {})) count++;
       }));
       if (!count) return;
       const isCur = g === currentGateValue;
@@ -1807,7 +1814,7 @@ function renderTable() {
       if (activeFilter) {
         const r_ = (gd.rating || "").toLowerCase();
         const a_ = (gd.actual_status || "").toLowerCase();
-        const isNa = a_ === "n/a" || r_ === "n/a";
+        const isNa = isTaskDeviated(gd);
         if (activeFilter.type === 'green'  && r_ !== 'green') return;
         if (activeFilter.type === 'yellow' && r_ !== 'yellow') return;
         if (activeFilter.type === 'red'    && r_ !== 'red') return;
