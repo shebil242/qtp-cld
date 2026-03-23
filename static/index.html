@@ -985,14 +985,12 @@ function isTaskNA(gd) {
 }
 
 function isTaskDeviated(gd) {
-  const as = (gd.actual_status || "").trim().toLowerCase();
-  const r = (gd.rating || "").trim().toLowerCase();
-  const hasSomeData = as !== "" || r !== "" || (gd.expected_status || "") !== "";
+  // Only count tasks that have been touched at all
+  const hasSomeData = (gd.expected_status || "") !== "" || (gd.actual_status || "") !== "" || (gd.rating || "") !== "";
   if (!hasSomeData) return false;
-  // N/A anywhere = deviation. Also both empty when task has expected_status = deviation
-  if (as.includes("n/a") || r.includes("n/a")) return true;
-  if (as === "" && r === "") return true;
-  return false;
+  // Deviated = rating is anything other than Green, Yellow, Red
+  const r = (gd.rating || "").trim();
+  return !["Green", "Yellow", "Red"].includes(r);
 }
 
 function computeDashboard() {
