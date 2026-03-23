@@ -359,6 +359,29 @@ body.dark .audit-item { background: rgba(255,255,255,.04); }
 /* User chip in topbar */
 .user-chip { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 20px; padding: 5px 12px; color: rgba(255,255,255,.85); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .user-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+
+/* Advanced filter panel */
+.adv-filter-overlay { display: none; position: fixed; inset: 0; background: rgba(16,24,40,.5); backdrop-filter: blur(4px); z-index: 250; align-items: center; justify-content: center; }
+.adv-filter-overlay.active { display: flex; animation: modalBgIn .15s ease; }
+.adv-filter-panel { background: rgba(255,255,255,.92); backdrop-filter: blur(24px); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(16,24,40,.1), 0 20px 50px rgba(16,24,40,.15); border: 1px solid rgba(255,255,255,.45); padding: 28px 28px 24px; width: 500px; animation: modalSlide .25s cubic-bezier(.22,1,.36,1); }
+body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba(255,255,255,.08); }
+.adv-filter-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+.adv-filter-section { margin-bottom: 18px; }
+.adv-filter-section-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
+.adv-filter-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.adv-chip { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); transition: all .15s; user-select: none; }
+.adv-chip:hover { border-color: var(--accent); color: var(--accent); }
+.adv-chip.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+.adv-chip.sel-green { background: var(--success) !important; border-color: var(--success) !important; color: #fff !important; }
+.adv-chip.sel-yellow { background: var(--warning) !important; border-color: var(--warning) !important; color: #fff !important; }
+.adv-chip.sel-red { background: var(--error) !important; border-color: var(--error) !important; color: #fff !important; }
+.adv-filter-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-light); }
+.btn-adv-apply { background: linear-gradient(135deg, #1b4f9b 0%, #4338ca 100%); color: #fff; border: none; border-radius: var(--radius-xs); padding: 9px 20px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-adv-reset { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 9px 16px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-adv-reset:hover { background: #f3f4f6; }
+.btn-adv-filter { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); transition: all .15s; font-family: inherit; margin-left: auto; }
+.btn-adv-filter:hover { border-color: var(--accent); color: var(--accent); }
+.btn-adv-filter.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -575,6 +598,57 @@ body.dark .audit-item { background: rgba(255,255,255,.04); }
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6L4.5 9L10.5 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       My Tasks Only
     </button>
+    <button class="btn-adv-filter" id="advFilterBtn" onclick="openAdvFilter()" type="button">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3h10M3 6h6M5 9h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Filter
+    </button>
+  </div>
+
+  <!-- ==================== ADVANCED FILTER MODAL ==================== -->
+  <div class="adv-filter-overlay" id="advFilterOverlay" onclick="if(event.target===this)closeAdvFilter()">
+    <div class="adv-filter-panel">
+      <div class="adv-filter-title">
+        <span>Filter Tasks</span>
+        <button onclick="closeAdvFilter()" style="background:none;border:none;cursor:pointer;color:var(--text-tertiary);display:flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="adv-filter-section">
+        <p class="adv-filter-section-label">Rating</p>
+        <div class="adv-filter-chips" id="afRating">
+          <span class="adv-chip" data-val="Green" onclick="toggleChip(this,'afRating')">🟢 Green</span>
+          <span class="adv-chip" data-val="Yellow" onclick="toggleChip(this,'afRating')">🟡 Yellow</span>
+          <span class="adv-chip" data-val="Red" onclick="toggleChip(this,'afRating')">🔴 Red</span>
+          <span class="adv-chip" data-val="N/A" onclick="toggleChip(this,'afRating')">⬜ N/A</span>
+        </div>
+      </div>
+      <div class="adv-filter-section">
+        <p class="adv-filter-section-label">Actual Status</p>
+        <div class="adv-filter-chips" id="afStatus">
+          <span class="adv-chip" data-val="Following Plan" onclick="toggleChip(this,'afStatus')">Following Plan</span>
+          <span class="adv-chip" data-val="Completed" onclick="toggleChip(this,'afStatus')">Completed</span>
+          <span class="adv-chip" data-val="Late vs planning" onclick="toggleChip(this,'afStatus')">Late vs planning</span>
+          <span class="adv-chip" data-val="N/A" onclick="toggleChip(this,'afStatus')">N/A</span>
+        </div>
+      </div>
+      <div class="adv-filter-section">
+        <p class="adv-filter-section-label">Deviation</p>
+        <div class="adv-filter-chips" id="afDeviation">
+          <span class="adv-chip" data-val="deviated" onclick="toggleChip(this,'afDeviation')">⚠️ Deviated tasks only</span>
+          <span class="adv-chip" data-val="no-deviation" onclick="toggleChip(this,'afDeviation')">✅ Non-deviated only</span>
+        </div>
+      </div>
+      <div class="adv-filter-section">
+        <p class="adv-filter-section-label">Quality Engineer</p>
+        <div class="adv-filter-chips" id="afQE"></div>
+      </div>
+      <div class="adv-filter-section">
+        <p class="adv-filter-section-label">Responsible Engineer</p>
+        <div class="adv-filter-chips" id="afRE"></div>
+      </div>
+      <div class="adv-filter-actions">
+        <button class="btn-adv-reset" onclick="resetAdvFilter()">Reset All</button>
+        <button class="btn-adv-apply" onclick="applyAdvFilter()">Apply Filter</button>
+      </div>
+    </div>
   </div>
 
   <!-- ==================== TABLE ==================== -->
@@ -911,13 +985,14 @@ function isTaskNA(gd) {
 }
 
 function isTaskDeviated(gd) {
-  const as = (gd.actual_status || "").trim();
-  const r = (gd.rating || "").trim();
-  // Only count as deviated if the task has been touched (has some data)
+  const as = (gd.actual_status || "").trim().toLowerCase();
+  const r = (gd.rating || "").trim().toLowerCase();
   const hasSomeData = as !== "" || r !== "" || (gd.expected_status || "") !== "";
   if (!hasSomeData) return false;
-  // Deviated if actual_status=N/A OR rating=N/A OR both actual_status and rating are empty
-  return as.toLowerCase() === "n/a" || r.toLowerCase() === "n/a" || (as === "" && r === "");
+  // N/A anywhere = deviation. Also both empty when task has expected_status = deviation
+  if (as.includes("n/a") || r.includes("n/a")) return true;
+  if (as === "" && r === "") return true;
+  return false;
 }
 
 function computeDashboard() {
@@ -1824,6 +1899,16 @@ function renderTable() {
         if (activeFilter.type === 'na'     && !isNa) return;
       }
 
+      // Advanced filter
+      if (advFilter && Object.keys(advFilter).length) {
+        if (advFilter.ratings?.length && !advFilter.ratings.includes(gd.rating || '')) return;
+        if (advFilter.statuses?.length && !advFilter.statuses.includes(gd.actual_status || '')) return;
+        if (advFilter.deviation === 'deviated' && !isTaskDeviated(gd)) return;
+        if (advFilter.deviation === 'no-deviation' && isTaskDeviated(gd)) return;
+        if (advFilter.engineers?.length && !advFilter.engineers.includes(t.qe || '')) return;
+        if (advFilter.responsibles?.length && !advFilter.responsibles.includes(t.resp || '')) return;
+      }
+
       let r = taskTable.insertRow();
       r.style.cursor = 'pointer';
       r.setAttribute('data-clickable', 'true');
@@ -1995,6 +2080,101 @@ function toggleMyTasks() {
     if (sel.value) btn.classList.add('active');
   }
   renderTable();
+}
+
+// ===== ADVANCED FILTER =====
+let advFilter = {}; // { ratings:[], statuses:[], deviation:'', engineers:[], responsibles:[] }
+
+function openAdvFilter() {
+  // Populate engineer chips dynamically
+  ['afQE','afRE'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    [...engineerMaster].sort((a,b)=>a.localeCompare(b)).forEach(name => {
+      const chip = document.createElement('span');
+      chip.className = 'adv-chip';
+      chip.dataset.val = name;
+      chip.textContent = name;
+      chip.onclick = () => toggleChip(chip, id);
+      // Restore selected state
+      const field = id === 'afQE' ? 'engineers' : 'responsibles';
+      if (advFilter[field] && advFilter[field].includes(name)) chip.classList.add('selected');
+      el.appendChild(chip);
+    });
+  });
+  // Restore other selections
+  restoreChips('afRating', advFilter.ratings || []);
+  restoreChips('afStatus', advFilter.statuses || []);
+  restoreChips('afDeviation', advFilter.deviation ? [advFilter.deviation] : []);
+  document.getElementById('advFilterOverlay').classList.add('active');
+}
+
+function restoreChips(containerId, vals) {
+  document.querySelectorAll(`#${containerId} .adv-chip`).forEach(c => {
+    c.classList.toggle('selected', vals.includes(c.dataset.val));
+  });
+}
+
+function closeAdvFilter() {
+  document.getElementById('advFilterOverlay').classList.remove('active');
+}
+
+function toggleChip(chip, groupId) {
+  // Deviation group is single-select
+  if (groupId === 'afDeviation') {
+    document.querySelectorAll('#afDeviation .adv-chip').forEach(c => c.classList.remove('selected'));
+  }
+  chip.classList.toggle('selected');
+}
+
+function getSelectedVals(containerId) {
+  return [...document.querySelectorAll(`#${containerId} .adv-chip.selected`)].map(c => c.dataset.val);
+}
+
+function applyAdvFilter() {
+  advFilter = {
+    ratings: getSelectedVals('afRating'),
+    statuses: getSelectedVals('afStatus'),
+    deviation: getSelectedVals('afDeviation')[0] || '',
+    engineers: getSelectedVals('afQE'),
+    responsibles: getSelectedVals('afRE')
+  };
+  const hasAny = advFilter.ratings.length || advFilter.statuses.length || advFilter.deviation || advFilter.engineers.length || advFilter.responsibles.length;
+  document.getElementById('advFilterBtn').classList.toggle('active', !!hasAny);
+  renderTable();
+  renderAdvFilterBadge();
+  closeAdvFilter();
+}
+
+function resetAdvFilter() {
+  advFilter = {};
+  document.querySelectorAll('.adv-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('advFilterBtn').classList.remove('active');
+  renderTable();
+  renderAdvFilterBadge();
+  closeAdvFilter();
+}
+
+function renderAdvFilterBadge() {
+  let badge = document.getElementById('advFilterBadge');
+  const hasAny = advFilter.ratings?.length || advFilter.statuses?.length || advFilter.deviation || advFilter.engineers?.length || advFilter.responsibles?.length;
+  if (!hasAny) { if (badge) badge.remove(); return; }
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'advFilterBadge';
+    badge.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 14px;background:var(--warning-bg);border:1px solid var(--warning);border-radius:8px;font-size:12px;font-weight:600;color:var(--warning);flex-wrap:wrap;';
+    const tableWrap = document.querySelector('.table-wrap');
+    tableWrap.parentNode.insertBefore(badge, tableWrap);
+  }
+  const parts = [];
+  if (advFilter.ratings?.length) parts.push('Rating: ' + advFilter.ratings.join(', '));
+  if (advFilter.statuses?.length) parts.push('Status: ' + advFilter.statuses.join(', '));
+  if (advFilter.deviation) parts.push(advFilter.deviation === 'deviated' ? 'Deviated only' : 'Non-deviated only');
+  if (advFilter.engineers?.length) parts.push('QE: ' + advFilter.engineers.join(', '));
+  if (advFilter.responsibles?.length) parts.push('Resp: ' + advFilter.responsibles.join(', '));
+  badge.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3h10M3 6h6M5 9h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    ${parts.join('  ·  ')}
+    <button onclick="resetAdvFilter()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--warning);font-size:12px;font-weight:700;font-family:inherit;">✕ Clear</button>`;
 }
 </script>
 
