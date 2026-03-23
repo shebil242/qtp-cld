@@ -360,7 +360,64 @@ body.dark .audit-item { background: rgba(255,255,255,.04); }
 .user-chip { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 20px; padding: 5px 12px; color: rgba(255,255,255,.85); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .user-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
 
-/* Advanced filter panel */
+/* Landing page */
+.landing-overlay { display: flex; position: fixed; inset: 0; background: var(--bg); z-index: 500; flex-direction: column; overflow-y: auto; }
+.landing-overlay.hidden { display: none; }
+.landing-topbar { background: linear-gradient(135deg, rgba(0,48,87,.97) 0%, rgba(10,37,64,.99) 100%); height: 64px; display: flex; align-items: center; padding: 0 32px; gap: 16px; position: sticky; top: 0; z-index: 10; }
+.landing-topbar-title { color: rgba(255,255,255,.95); font-size: 15px; font-weight: 700; letter-spacing: .02em; }
+.btn-new-qtp { margin-left: auto; background: linear-gradient(135deg, #1b4f9b, #4338ca); color: #fff; border: none; border-radius: 8px; padding: 9px 20px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all .2s; }
+.btn-new-qtp:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(67,56,202,.3); }
+.landing-body { padding: 36px 40px; max-width: 1440px; margin: 0 auto; width: 100%; }
+.landing-section-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 20px; }
+.landing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.project-card { background: rgba(255,255,255,.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.4); border-radius: var(--radius); padding: 22px 24px; cursor: pointer; transition: all .2s; box-shadow: 0 2px 8px rgba(16,24,40,.06); position: relative; overflow: hidden; }
+body.dark .project-card { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
+.project-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(16,24,40,.12); border-color: var(--accent); }
+.project-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), #4338ca); opacity: 0; transition: opacity .2s; }
+.project-card:hover::before { opacity: 1; }
+.pc-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+.pc-id { font-size: 16px; font-weight: 800; color: var(--text-primary); letter-spacing: -.2px; }
+.pc-gate { font-size: 11px; font-weight: 700; background: var(--accent-light); color: var(--accent); padding: 3px 10px; border-radius: 20px; }
+.pc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.pc-stat { display: flex; flex-direction: column; gap: 2px; }
+.pc-stat-val { font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+.pc-stat-lbl { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+.pc-rag { display: flex; gap: 8px; align-items: center; padding-top: 14px; border-top: 1px solid var(--border-light); }
+.pc-rag-dot { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; }
+.landing-empty { text-align: center; padding: 80px 20px; color: var(--text-muted); }
+.landing-empty svg { opacity: .3; margin-bottom: 16px; }
+.landing-empty p { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
+.landing-empty span { font-size: 13px; }
+
+/* Searchable dropdown */
+.eng-search-wrap { position: relative; }
+.eng-search-input { width: 100%; background: #f9fafb; border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 9px 12px; font-family: inherit; font-size: 13px; color: var(--text-primary); outline: none; transition: all .15s; }
+.eng-search-input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px var(--accent-glow); }
+.eng-search-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-xs); box-shadow: var(--shadow-lg); z-index: 300; max-height: 220px; overflow-y: auto; display: none; }
+body.dark .eng-search-dropdown { background: #1c2129; border-color: #30363d; }
+.eng-search-dropdown.open { display: block; }
+.eng-dd-item { padding: 8px 12px; font-size: 13px; cursor: pointer; color: var(--text-primary); transition: background .1s; }
+.eng-dd-item:hover, .eng-dd-item.highlighted { background: var(--accent-light); color: var(--accent); }
+.eng-dd-add { padding: 8px 12px; font-size: 13px; cursor: pointer; color: var(--accent); font-weight: 600; border-top: 1px solid var(--border-light); display: flex; align-items: center; gap: 6px; }
+.eng-dd-add:hover { background: var(--accent-light); }
+.eng-dd-empty { padding: 8px 12px; font-size: 12px; color: var(--text-muted); }
+
+/* Login searchable */
+.login-eng-wrap { position: relative; margin-bottom: 8px; }
+.login-eng-input { width: 100%; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); border-radius: 6px; padding: 10px 14px; font-family: inherit; font-size: 14px; color: #fff; outline: none; transition: border .15s; }
+.login-eng-input::placeholder { color: rgba(255,255,255,.35); }
+.login-eng-input:focus { border-color: rgba(255,255,255,.5); }
+.login-eng-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #0d2540; border: 1px solid rgba(255,255,255,.15); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.4); z-index: 400; max-height: 200px; overflow-y: auto; display: none; }
+.login-eng-dropdown.open { display: block; }
+.login-dd-item { padding: 9px 14px; font-size: 13px; cursor: pointer; color: rgba(255,255,255,.85); transition: background .1s; }
+.login-dd-item:hover { background: rgba(255,255,255,.1); }
+.login-dd-add { padding: 9px 14px; font-size: 13px; cursor: pointer; color: #58a6ff; font-weight: 600; border-top: 1px solid rgba(255,255,255,.1); display: flex; align-items: center; gap: 6px; }
+.login-dd-add:hover { background: rgba(255,255,255,.08); }
+/* Email input on login */
+.login-email-row { display: none; margin-bottom: 16px; }
+.login-email-row.show { display: block; }
+.login-email-note { font-size: 11px; color: rgba(255,255,255,.4); margin-bottom: 6px; }
+</style>
 .adv-filter-overlay { display: none; position: fixed; inset: 0; background: rgba(16,24,40,.5); backdrop-filter: blur(4px); z-index: 250; align-items: center; justify-content: center; }
 .adv-filter-overlay.active { display: flex; animation: modalBgIn .15s ease; }
 .adv-filter-panel { background: rgba(255,255,255,.92); backdrop-filter: blur(24px); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(16,24,40,.1), 0 20px 50px rgba(16,24,40,.15); border: 1px solid rgba(255,255,255,.45); padding: 28px 28px 24px; width: 500px; animation: modalSlide .25s cubic-bezier(.22,1,.36,1); }
@@ -392,16 +449,42 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
     <div class="login-logo">
       <img src="data:image/png;base64,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" alt="Volvo" style="height:32px; width:auto; object-fit:contain; opacity:.9;">
     </div>
-    <p class="login-title">Quality Task Plan</p>
-    <p class="login-subtitle">Select your name to continue</p>
-    <label class="login-label">Who are you?</label>
-    <select id="loginUserSelect" class="login-select">
-      <option value="">— Select your name —</option>
-    </select>
-    <p style="font-size:11px;color:rgba(255,255,255,.35);margin:-14px 0 10px;text-align:left;">Or type your name below if not listed</p>
-    <input id="loginUserInput" type="text" placeholder="Type your name..." style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:10px 14px;font-family:inherit;font-size:14px;color:#fff;outline:none;margin-bottom:20px;" oninput="document.getElementById('loginUserSelect').value=''">
+    <p class="login-title">Welcome to Volvo TTI QTP</p>
+    <p class="login-subtitle">Please identify yourself to continue</p>
+    <label class="login-label">Your Name</label>
+    <div class="login-eng-wrap">
+      <input id="loginEngInput" class="login-eng-input" type="text" placeholder="Search or type your name..." autocomplete="off"
+        oninput="filterLoginDropdown(this.value)" onfocus="openLoginDropdown()" onkeydown="loginDropdownKey(event)">
+      <div class="login-eng-dropdown" id="loginEngDropdown"></div>
+    </div>
+    <div class="login-email-row" id="loginEmailRow">
+      <p class="login-email-note">📧 We don't have your email yet — add it for deadline reminders (optional)</p>
+      <input id="loginEmailInput" class="login-eng-input" type="email" placeholder="your.name@volvo.com">
+    </div>
     <button class="btn-login" onclick="doLogin()">Enter QTP</button>
     <p class="login-footer">Volvo TTI · Internal Use Only</p>
+  </div>
+</div>
+
+<!-- ==================== LANDING PAGE ==================== -->
+<div class="landing-overlay" id="landingOverlay">
+  <div class="landing-topbar">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAEZCAMAAABW0ifkAAABgFBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAURmmrAAAAf3RSTlMAAgQGCAoMDhASFBYYGhweICIkJigqLC4wMjQ2ODo8PkBCREZISkxOUFJUVlhaXF5gYmRmaGpsbnBydHZ4enx+gYOFh4mLjY+Rk5WXmZudn6Gjpaepq62vsbO1t7m7vb/Bw8XHycvNz9HT1dfZ293f4ePl5+nr7e/x8/X3+fv9RzjXsgAAKWJJREFUeNrtnYd/07sXxncGmw46KXuWfWy4H2X1WFf2sY+9jr0pbaEjif/1H1m2rPdkS4rsOAF9brT9JpJjxU9vfh+D6mDVf6DxX3+Iv5OA927uJ22AUWgLAIPP324AA/ZzAKv9v/5fkwGyt2sCQP6YEBC4F50MVPY98Lw1fuN+rH878G/ej/XfGPcyLYD5f2WB1yQKcDcL37MOAn6PX3DUhay3/QBYAPpHgPc0QABg+EcjgDFh4oSBX0e8CwIdgtIP/xX9huWlGYBFLyQPNH7qaOD3+DXFe/1JD+o5/NMX+BMNCHoSEzBFgOGVEwV+OfEOnGYe0N5BJt5BJqzNAeGkgWQBwryVGb5tDQjK1e/xa4h34MQ7CzyFAUOe0MVAZvgaPOl1ywBaC9StF6As2w4DgBB2AKRazwsI4U1AOHeUAcpFymS+03iBX8YNq+IXDRrXlFrWPJAGN+wvJN5JhytDGh7jHa8gxko4APQAJFBE9S4RoCoOOb2nUwEGIG4ew8KXm4H5+iAHIBc76AHgy3jG0BcjKYD3ZvhaL+s4IChyIVy8cy4dUlgDNAn8Fu/JiXfkg2Uybytp6jJOXoIZQJjRjJA3sQOE+7ITgd/jV7fTef9q0GrXDlAz0AXSFU/Hp0EnAerWHotOMGIyWAsQfQIWgVyhf2zTjn1/Hj124sSxiUN7t60f7e3OSq6KyT5gmwOagXdFXQiCMXoFIG5x1jWy6fDp60/fTi+Uy25glEs/vrx+eOXk7tUDWaxXdmrAhdF2sv+jaLUDATDBkNMFGFocO37NgMzQtr9uvPkubDU1lr69uHx4Q68TSOLyVD4GnLO67YHQbFgl6S+awUZAHD7Hwubj976VXK2x9O764ZX5jnfDAiPsdSYKYlCQ+2EmdwQAsnPDEIDuDWeeL7iGY/bukZVZ6GTxDhHivQ3TpYYOPZhzmxvlL1d3FPg8Ot7wXXfVaExliFQmJlkjRqDzhjN24lXRtTLmHxzoJe/RfrP5ZrJpC7gE/88YJfe590TFzEAbIM1pTQCGj78uuxbHwr29BZxB3sSmg0z0Jgkoi3dJ6UNAs2fNAAxVQYAeAN17Hhdd62Pu2gZHkJc7yxY2PXhQJgl0kG9x7PysG88ovzsWFPOw6WVniPdA/I17+kCWJksAvunPtIDmc1uz2x6X3BjHjyurAsZMZv+0TfGecKFTpB8PxdMZjqcDQ0VqWgCIAbdAzDsa6Dr8wY17lB6NO" alt="Volvo" style="height:32px;opacity:.9;">
+    <span class="landing-topbar-title">TTI Quality Task Plan</span>
+    <button class="btn-new-qtp" onclick="startNewQTP()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      New QTP
+    </button>
+  </div>
+  <div class="landing-body">
+    <p class="landing-section-title" id="landingSectionTitle">All Projects</p>
+    <div class="landing-grid" id="landingGrid">
+      <div class="landing-empty" id="landingEmpty">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="8" y="8" width="32" height="32" rx="6" stroke="currentColor" stroke-width="2"/><path d="M16 24h16M24 16v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <p>No projects yet</p>
+        <span>Click "New QTP" to create your first project</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -415,6 +498,10 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
   <span class="topbar-quote">"Quality lasts when you put it first."</span>
   <div class="topbar-controls">
     <input type="file" id="qtpFileInput" accept=".xlsx,.xls" style="display:none" onchange="uploadQTP(this)">
+    <button class="btn-upload-qtp" onclick="showLanding()" title="Back to all projects" style="background:rgba(255,255,255,.08);">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M8 2L3 6.5L8 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      All Projects
+    </button>
     <button class="btn-dashboard" onclick="openDashboard()" title="Project Overview Dashboard">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
       Dashboard
@@ -839,44 +926,221 @@ const gateOrder = ["PCI","FeG","CSG","CG","DG","FDG","FIG","RG","EG"];
 let currentUser = "";
 let activeFilter = null; // { gate, type } where type = 'green','yellow','red','na'
 
-function doLogin() {
-  const sel = document.getElementById("loginUserSelect");
-  const inp = document.getElementById("loginUserInput");
-  const name = (inp.value.trim()) || sel.value.trim();
-  if (!name) {
-    inp.style.borderColor = "rgba(240,68,56,.6)";
-    sel.style.borderColor = "rgba(240,68,56,.6)";
-    setTimeout(() => { inp.style.borderColor = ""; sel.style.borderColor = ""; }, 1000);
+// ===== APP STATE =====
+let appState = 'landing'; // 'landing' | 'login' | 'qtp'
+let pendingProjectId = null; // project to load after login
+
+// ===== LANDING PAGE =====
+function showLanding() {
+  appState = 'landing';
+  document.getElementById('landingOverlay').classList.remove('hidden');
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('loginOverlay').style.display = 'none';
+  fetchAndRenderLanding();
+}
+
+function fetchAndRenderLanding() {
+  fetch('/all-projects')
+    .then(r => r.json())
+    .then(data => renderLandingCards(data.projects || []))
+    .catch(() => renderLandingCards([]));
+}
+
+function renderLandingCards(projects) {
+  const grid = document.getElementById('landingGrid');
+  const empty = document.getElementById('landingEmpty');
+  if (!projects.length) {
+    grid.innerHTML = '';
+    grid.appendChild(empty || (() => {
+      const d = document.createElement('div');
+      d.className = 'landing-empty';
+      d.innerHTML = '<p>No projects yet</p><span>Click "New QTP" to get started</span>';
+      return d;
+    })());
     return;
   }
+  const title = document.getElementById('landingSectionTitle');
+  if (title) title.textContent = `All Projects (${projects.length})`;
+
+  grid.innerHTML = projects.map(p => {
+    const gateIdx = gateOrder.indexOf(p.current_gate);
+    const gateColor = gateIdx >= gateOrder.length - 2 ? '#12b76a' : gateIdx >= 5 ? '#f79009' : '#1b4f9b';
+    const totalRag = p.green + p.yellow + p.red;
+    const ragBar = totalRag ? `
+      <div style="display:flex;height:6px;border-radius:4px;overflow:hidden;gap:2px;margin-top:6px;">
+        ${p.green  ? `<div style="flex:${p.green};background:#12b76a;" title="${p.green} Green"></div>` : ''}
+        ${p.yellow ? `<div style="flex:${p.yellow};background:#f79009;" title="${p.yellow} Yellow"></div>` : ''}
+        ${p.red    ? `<div style="flex:${p.red};background:#f04438;" title="${p.red} Red"></div>` : ''}
+      </div>` : '<div style="height:6px;background:var(--border-light);border-radius:4px;margin-top:6px;"></div>';
+
+    return `<div class="project-card" onclick="openProject('${escHtml(p.project_id)}')">
+      <div class="pc-header">
+        <span class="pc-id">${escHtml(p.project_id)}</span>
+        <span class="pc-gate" style="background:${gateColor}22;color:${gateColor};">${escHtml(p.current_gate)}</span>
+      </div>
+      <div class="pc-stats">
+        <div class="pc-stat"><span class="pc-stat-val">${p.completion_pct}%</span><span class="pc-stat-lbl">Complete</span></div>
+        <div class="pc-stat"><span class="pc-stat-val" style="color:${p.deviations>0?'#f04438':'var(--text-primary)'}">${p.deviations}</span><span class="pc-stat-lbl">Deviations</span></div>
+      </div>
+      <div class="pc-rag">
+        <span class="pc-rag-dot" style="color:#12b76a;">● ${p.green}</span>
+        <span class="pc-rag-dot" style="color:#f79009;">● ${p.yellow}</span>
+        <span class="pc-rag-dot" style="color:#f04438;">● ${p.red}</span>
+        ${ragBar}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openProject(pid) {
+  pendingProjectId = pid;
+  showLoginScreen();
+}
+
+function startNewQTP() {
+  pendingProjectId = null;
+  showLoginScreen();
+}
+
+function showLoginScreen() {
+  appState = 'login';
+  document.getElementById('landingOverlay').classList.add('hidden');
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('loginOverlay').style.display = 'flex';
+  // Pre-fill if returning user
+  const saved = localStorage.getItem('lastUser');
+  if (saved) {
+    document.getElementById('loginEngInput').value = saved;
+    checkEmailNeeded(saved);
+  }
+  setTimeout(() => document.getElementById('loginEngInput').focus(), 100);
+}
+
+// ===== LOGIN SEARCHABLE DROPDOWN =====
+let loginDropdownOpen = false;
+let loginHighlightIdx = -1;
+
+function buildLoginDropdownItems(filter) {
+  const sorted = [...engineerMaster].sort((a,b) => a.localeCompare(b));
+  const f = (filter || '').toLowerCase();
+  const matches = f ? sorted.filter(n => n.toLowerCase().includes(f)) : sorted;
+  return { matches, showAdd: f && !sorted.find(n => n.toLowerCase() === f) };
+}
+
+function renderLoginDropdown(filter) {
+  const dd = document.getElementById('loginEngDropdown');
+  const { matches, showAdd } = buildLoginDropdownItems(filter);
+  loginHighlightIdx = -1;
+  let html = matches.map((n,i) =>
+    `<div class="login-dd-item" data-val="${escHtml(n)}" onclick="selectLoginName('${escHtml(n)}')">${escHtml(n)}</div>`
+  ).join('');
+  if (showAdd) {
+    html += `<div class="login-dd-add" onclick="selectLoginName('${escHtml(filter)}', true)">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1v9M1 5.5h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Add "${escHtml(filter)}"
+    </div>`;
+  }
+  dd.innerHTML = html || `<div class="login-dd-empty">No matches</div>`;
+}
+
+function openLoginDropdown() {
+  const val = document.getElementById('loginEngInput').value;
+  renderLoginDropdown(val);
+  document.getElementById('loginEngDropdown').classList.add('open');
+  loginDropdownOpen = true;
+}
+
+function filterLoginDropdown(val) {
+  renderLoginDropdown(val);
+  document.getElementById('loginEngDropdown').classList.add('open');
+  loginDropdownOpen = true;
+  checkEmailNeeded(val);
+}
+
+function selectLoginName(name, isNew) {
+  document.getElementById('loginEngInput').value = name;
+  document.getElementById('loginEngDropdown').classList.remove('open');
+  loginDropdownOpen = false;
+  if (isNew) {
+    engineerMaster.push(name);
+    localStorage.setItem('engineerMaster', JSON.stringify(engineerMaster));
+    fetch('/save-engineer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, email:''}) }).catch(()=>{});
+    populateEngineerDropdown('qualityEngineer');
+    populateEngineerDropdown('responsibleEngineer');
+  }
+  checkEmailNeeded(name);
+}
+
+function checkEmailNeeded(name) {
+  const stored = JSON.parse(localStorage.getItem('engineerEmails') || '{}');
+  const row = document.getElementById('loginEmailRow');
+  if (row) row.classList.toggle('show', !!name && !stored[name]);
+}
+
+function loginDropdownKey(e) {
+  const dd = document.getElementById('loginEngDropdown');
+  const items = dd.querySelectorAll('.login-dd-item, .login-dd-add');
+  if (e.key === 'ArrowDown') { loginHighlightIdx = Math.min(loginHighlightIdx+1, items.length-1); }
+  else if (e.key === 'ArrowUp') { loginHighlightIdx = Math.max(loginHighlightIdx-1, 0); }
+  else if (e.key === 'Enter') {
+    if (loginHighlightIdx >= 0 && items[loginHighlightIdx]) items[loginHighlightIdx].click();
+    else doLogin();
+    return;
+  } else if (e.key === 'Escape') { dd.classList.remove('open'); return; }
+  items.forEach((el,i) => el.classList.toggle('highlighted', i === loginHighlightIdx));
+  if (items[loginHighlightIdx]) items[loginHighlightIdx].scrollIntoView({block:'nearest'});
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.login-eng-wrap')) {
+    document.getElementById('loginEngDropdown')?.classList.remove('open');
+  }
+});
+
+// ===== LOGIN =====
+function doLogin() {
+  const name = document.getElementById('loginEngInput').value.trim();
+  if (!name) {
+    document.getElementById('loginEngInput').style.borderColor = 'rgba(240,68,56,.6)';
+    setTimeout(() => document.getElementById('loginEngInput').style.borderColor = '', 1000);
+    return;
+  }
+  const email = (document.getElementById('loginEmailInput')?.value || '').trim();
   currentUser = name;
-  localStorage.setItem("lastUser", name);
-  // Also add to engineer list if new
+  localStorage.setItem('lastUser', name);
+  if (email) {
+    const stored = JSON.parse(localStorage.getItem('engineerEmails') || '{}');
+    stored[name] = email;
+    localStorage.setItem('engineerEmails', JSON.stringify(stored));
+    fetch('/save-engineer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, email}) }).catch(()=>{});
+  }
   if (!engineerMaster.includes(name)) {
     engineerMaster.push(name);
-    localStorage.setItem("engineerMaster", JSON.stringify(engineerMaster));
-    fetch("/save-engineer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) }).catch(() => {});
+    localStorage.setItem('engineerMaster', JSON.stringify(engineerMaster));
+    fetch('/save-engineer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, email: email||''}) }).catch(()=>{});
+    populateEngineerDropdown('qualityEngineer');
+    populateEngineerDropdown('responsibleEngineer');
   }
-  document.getElementById("loginOverlay").classList.add("hidden");
-  document.getElementById("userChip").style.display = "flex";
-  document.getElementById("userChipName").textContent = name;
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('userChip').style.display = 'flex';
+  document.getElementById('userChipName').textContent = name;
+  appState = 'qtp';
+  // Load pending project if came from landing
+  if (pendingProjectId) {
+    document.getElementById('projectId').value = pendingProjectId;
+    pendingProjectId = null;
+    loadProject();
+  }
 }
 
 function populateLoginDropdown() {
-  const sel = document.getElementById("loginUserSelect");
-  const saved = localStorage.getItem("lastUser");
-  const sorted = [...engineerMaster].sort((a,b) => a.localeCompare(b));
-  sorted.forEach(name => {
-    const o = document.createElement("option");
-    o.value = name; o.textContent = name;
-    if (name === saved) o.selected = true;
-    sel.appendChild(o);
-  });
-  if (saved && engineerMaster.includes(saved)) {
-    currentUser = saved;
-    document.getElementById("loginOverlay").classList.add("hidden");
-    document.getElementById("userChip").style.display = "flex";
-    document.getElementById("userChipName").textContent = saved;
+  // no-op now — login uses searchable input
+  // Auto-skip login if returning user with saved session
+  const saved = localStorage.getItem('lastUser');
+  if (saved && engineerMaster.includes(saved) && appState === 'login') {
+    document.getElementById('loginEngInput').value = saved;
+    checkEmailNeeded(saved);
   }
 }
 
@@ -1460,7 +1724,11 @@ function loadEngineers() {
     .then(res => res.json())
     .then(data => {
       if (data && data.engineers) {
-        data.engineers.forEach(name => { if (!engineerMaster.includes(name)) engineerMaster.push(name); });
+        // engineers are now objects {name, email}
+        data.engineers.forEach(e => {
+          const name = typeof e === 'object' ? e.name : e;
+          if (!engineerMaster.includes(name)) engineerMaster.push(name);
+        });
         localStorage.setItem("engineerMaster", JSON.stringify(engineerMaster));
         populateEngineerDropdown("qualityEngineer");
         populateEngineerDropdown("responsibleEngineer");
@@ -1561,6 +1829,10 @@ window.onload = function () {
   });
   loadEngineers();
   buildGateTimeline();
+  // Hide login, show landing first
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('loginOverlay').style.display = 'none';
+  showLanding();
 };
 
 // ===== LOADING =====
