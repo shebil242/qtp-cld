@@ -913,7 +913,10 @@ function isTaskNA(gd) {
 function isTaskDeviated(gd) {
   const as = (gd.actual_status || "").trim();
   const r = (gd.rating || "").trim();
-  // Deviated if: actual_status=N/A, OR rating=N/A, OR both are empty/unfilled
+  // Only count as deviated if the task has been touched (has some data)
+  const hasSomeData = as !== "" || r !== "" || (gd.expected_status || "") !== "";
+  if (!hasSomeData) return false;
+  // Deviated if actual_status=N/A OR rating=N/A OR both actual_status and rating are empty
   return as.toLowerCase() === "n/a" || r.toLowerCase() === "n/a" || (as === "" && r === "");
 }
 
