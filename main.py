@@ -453,17 +453,18 @@ def all_projects():
     for pid, p in projects.items():
         current_gate = project_gates.get(pid, "PCI")
         gate_tasks = [t for t in p["tasks"] if t["gate"] == current_gate]
-        unique_tasks = {t["quality_task"] for t in p["tasks"]}
-        total = len(unique_tasks)
+        unique_task_keys = {(t["item"], t["quality_task"]) for t in p["tasks"]}
+        total = len(unique_task_keys)
 
         green = yellow = red = deviated = completed = 0
         for t in gate_tasks:
             r = t.get("rating", "")
             a = t.get("actual_status", "")
+            es = t.get("expected_status", "")
             if r == "Green": green += 1
             elif r == "Yellow": yellow += 1
             elif r == "Red": red += 1
-            if r not in ("Green", "Yellow", "Red") and (r or a or t.get("expected_status", "")):
+            if r not in ("Green", "Yellow", "Red") and (r or a or es):
                 deviated += 1
             if a.lower() == "completed":
                 completed += 1
@@ -515,4 +516,3 @@ def overdue_tasks():
 
 # ---------- SERVE FRONTEND ----------
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
-
