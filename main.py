@@ -56,6 +56,9 @@ class Task(BaseModel):
     next_gate: Optional[str] = ""
     deviation: Optional[str] = "No"
     deviation_text: Optional[str] = ""
+    risk_description: Optional[str] = ""
+    risk_level: Optional[str] = ""
+    next_update_week: Optional[str] = ""
 
 
 class DeleteTask(BaseModel):
@@ -73,6 +76,15 @@ class EngineerName(BaseModel):
 class AdvanceGate(BaseModel):
     project_id: str
     new_gate: str
+
+
+class ImpactedProductEntry(BaseModel):
+    project_id: str
+    name: str
+
+
+class FgVmsOrgEntry(BaseModel):
+    name: str
 
 
 # ---- Engineer helpers ----
@@ -122,6 +134,9 @@ def save_task(task: Task):
                     "next_gate": task.next_gate or "",
                     "deviation": task.deviation or "No",
                     "deviation_text": task.deviation_text or "",
+                    "risk_description": task.risk_description or "",
+                    "risk_level": task.risk_level or "",
+                    "next_update_week": task.next_update_week or "",
                     "current_gate": db["project_gates"].get(task.project_id, "PCI")
                 })
             else:
@@ -135,6 +150,8 @@ def save_task(task: Task):
                     "completion_level": "", "comments": "",
                     "next_gate": task.next_gate or "",
                     "deviation": "No", "deviation_text": "",
+                    "risk_description": "", "risk_level": "",
+                    "next_update_week": "",
                     "current_gate": db["project_gates"].get(task.project_id, "PCI")
                 })
     else:
@@ -155,7 +172,10 @@ def save_task(task: Task):
                     "comments": task.comments or "",
                     "next_gate": task.next_gate or "",
                     "deviation": task.deviation or "No",
-                    "deviation_text": task.deviation_text or ""
+                    "deviation_text": task.deviation_text or "",
+                    "risk_description": task.risk_description or "",
+                    "risk_level": task.risk_level or "",
+                    "next_update_week": task.next_update_week or ""
                 })
         # Update shared fields across all gates for this task
         for t in tasks:
@@ -405,6 +425,7 @@ async def upload_qtp(file: UploadFile = File(...)):
                             "comments": t["comments"],
                             "next_gate": "", "deviation": t["deviation"],
                             "deviation_text": t["deviation_text"],
+                            "risk_description": "", "risk_level": "", "next_update_week": "",
                             "current_gate": current_gate
                         })
                     else:
@@ -417,6 +438,7 @@ async def upload_qtp(file: UploadFile = File(...)):
                             "followup_week": "", "planned_start": "", "planned_end": "",
                             "completion_level": "", "comments": "", "next_gate": "",
                             "deviation": "No", "deviation_text": "",
+                            "risk_description": "", "risk_level": "", "next_update_week": "",
                             "current_gate": current_gate
                         })
                 inserted += 1
@@ -513,6 +535,50 @@ def overdue_tasks():
             })
     return {"overdue": overdue}
 
+
+
+# ---------- IMPACTED PRODUCTS (per-project) ----------
+@app.get("/project-impacted-products/{project_id}")
+def get_impacted_products(project_id: str):
+    db = read_db()
+    products = db.get("impacted_products", {}).get(project_id, [])
+    return {"impacted_products": sorted(products)}
+
+@app.post("/save-impacted-product")
+def save_impacted_product(entry: ImpactedProductEntry):
+    db = read_db()
+    if "impacted_products" not in db:
+        db["impacted_products"] = {}
+    if entry.project_id not in db["impacted_products"]:
+        db["impacted_products"][entry.project_id] = []
+    if entry.name not in db["impacted_products"][entry.project_id]:
+        db["impacted_products"][entry.project_id].append(entry.name)
+    write_db(db)
+    return {"status": "saved"}
+
+
+# ---------- FG/VMS/ORG (global) ----------
+DEFAULT_FGVMSORG = ["FG", "VMS", "ORG"]
+
+@app.get("/fgvmsorg")
+def get_fgvmsorg():
+    db = read_db()
+    entries = db.get("fgvmsorg", list(DEFAULT_FGVMSORG))
+    # ensure defaults always present
+    for d in DEFAULT_FGVMSORG:
+        if d not in entries:
+            entries.insert(DEFAULT_FGVMSORG.index(d), d)
+    return {"fgvmsorg": sorted(entries)}
+
+@app.post("/save-fgvmsorg")
+def save_fgvmsorg(entry: FgVmsOrgEntry):
+    db = read_db()
+    if "fgvmsorg" not in db:
+        db["fgvmsorg"] = list(DEFAULT_FGVMSORG)
+    if entry.name not in db["fgvmsorg"]:
+        db["fgvmsorg"].append(entry.name)
+    write_db(db)
+    return {"status": "saved"}
 
 # ---------- SERVE FRONTEND ----------
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
