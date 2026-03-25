@@ -524,7 +524,7 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
 
   <div class="page-header">
     <h1>Quality Task Plan</h1>
-    <p>pro-active quality management</p>
+    <p>quality management</p>
   </div>
 
   <!-- ==================== GATE TIMELINE ==================== -->
@@ -808,7 +808,7 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
           <th colspan="6" class="th-blue" style="text-align:left;">Decided Quality Tasks</th>
           <th colspan="7" class="th-green" style="text-align:left;">Quality Task Report</th>
           <th colspan="4" class="th-purple" style="text-align:left;">Follow-Up / Planning</th>
-          <th colspan="1" class="th-orange" style="text-align:left;">Details</th>
+          <th colspan="3" class="th-orange" style="text-align:left;">Details</th>
           <th class="th-purple" style="text-align:center;font-size:13px;">&#9881;</th>
         </tr>
         <tr>
@@ -829,6 +829,8 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
           <th>Start</th>
           <th>End</th>
           <th>Comments</th>
+          <th>Risk Description</th>
+          <th>Risk Level</th>
           <th style="text-align:center;">Actions</th>
         </tr>
       </thead>
@@ -1023,6 +1025,8 @@ let pendingProjectId = null; // project to load after login
 // ===== LANDING PAGE =====
 function showLanding() {
   appState = 'landing';
+  resetFormState();
+  currentProject = '';
   document.getElementById('landingOverlay').classList.remove('hidden');
   document.getElementById('loginOverlay').classList.add('hidden');
   document.getElementById('loginOverlay').style.display = 'none';
@@ -1082,7 +1086,48 @@ function renderLandingCards(projects) {
   }).join('');
 }
 
+function resetFormState() {
+  // Clear all form fields
+  const ids = [
+    'projectId','itemName','itemSelect','impactedProductSelect','fgVmsOrgSelect',
+    'qualityEngineer','responsibleEngineer','expectedStatus','completionLevel',
+    'actualStatus','followUpWeek','nextUpdateWeek','plannedStart','plannedEnd',
+    'comments','deviationText','riskDescription','nextGateStartDate'
+  ];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+  // Reset rating to Green
+  const rating = document.getElementById('rating');
+  if (rating) rating.value = 'Green';
+  // Reset riskLevel
+  const rl = document.getElementById('riskLevel');
+  if (rl) rl.value = '';
+  // Hide risk card
+  const rc = document.getElementById('riskInfoCard');
+  if (rc) rc.style.display = 'none';
+  // Reset read-only display divs
+  const esD = document.getElementById('expectedStatusDisplay');
+  const clD = document.getElementById('completionLevelDisplay');
+  if (esD) esD.textContent = '—';
+  if (clD) clD.textContent = '—';
+  // Clear item dropdown
+  const itemSel = document.getElementById('itemSelect');
+  if (itemSel) itemSel.innerHTML = '';
+  // Clear impacted product dropdown (keep global fg, reload per-project)
+  const ipSel = document.getElementById('impactedProductSelect');
+  if (ipSel) ipSel.innerHTML = '<option value="">Select Impacted Product</option>';
+  // Reset deviation
+  const dev = document.getElementById('deviationSelect');
+  if (dev) dev.value = 'No';
+}
+
 function openProject(pid) {
+  resetFormState();
+  currentProject = '';
   pendingProjectId = pid;
   showLoginScreen();
 }
@@ -2447,6 +2492,8 @@ function renderTable() {
         '<td>' + (hasFilled ? escHtml(gd.planned_start || '-') : '-') + '</td>' +
         '<td>' + (hasFilled ? escHtml(gd.planned_end || '-') : '-') + '</td>' +
         '<td>' + truncCell(gd.comments || '-', 30) + '</td>' +
+        '<td>' + truncCell(gd.risk_description || '-', 30) + '</td>' +
+        '<td>' + escHtml(gd.risk_level || '-') + '</td>' +
         '<td style="text-align:center;"><button class="btn-delete" title="Delete task" data-item="' + escHtml(item) + '" data-task="' + escHtml(task) + '" data-gate="' + escHtml(gate) + '"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 4h8M5.5 4V3a1 1 0 011-1h1a1 1 0 011 1v1M6 6.5v3M8 6.5v3M4 4l.5 7a1 1 0 001 1h3a1 1 0 001-1L10 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td>';
     });
   });
