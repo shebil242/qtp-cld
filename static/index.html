@@ -569,19 +569,16 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
     </div>
   </div>
 
-  <!-- ==================== CARD 2: EDIT QUALITY TASK ==================== -->
+  <!-- ==================== CARD 2: PROJECT INFO ==================== -->
   <div class="card">
     <p class="section-label">
-      <span class="icon green"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5.5L4.2 7.5L8 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      Edit Quality Task
+      <span class="icon blue"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="5.5" y="1" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="5.5" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="5.5" y="5.5" width="3.5" height="3.5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg></span>
+      Project Info
     </p>
-
-    <!-- ROW 1: Dropdowns -->
-    <div class="form-grid-top">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px 20px;">
       <div>
         <label class="field-label" for="itemSelect">Name of Item</label>
-        <select id="itemSelect" onchange="document.getElementById('itemName').value=this.value" style="margin-bottom:6px;">
-        </select>
+        <select id="itemSelect" onchange="document.getElementById('itemName').value=this.value" style="margin-bottom:6px;"></select>
         <button class="btn-link" onclick="openItemModal()">
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
           Add Item
@@ -589,9 +586,94 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
         <input id="itemName" type="hidden">
       </div>
       <div>
+        <label class="field-label" for="impactedProductSelect">Impacted Product</label>
+        <select id="impactedProductSelect" style="margin-bottom:6px;"><option value="">Select Impacted Product</option></select>
+        <button class="btn-link" onclick="openImpactedProductModal()">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Add Product
+        </button>
+      </div>
+      <div>
+        <label class="field-label" for="fgVmsOrgSelect">FG / VMS / ORG</label>
+        <select id="fgVmsOrgSelect" style="margin-bottom:6px;"><option value="">Select FG/VMS/ORG</option></select>
+        <button class="btn-link" onclick="openFgVmsOrgModal()">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Add Custom
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CARD 3: QUALITY TASK INFO ==================== -->
+  <div class="card">
+    <p class="section-label">
+      <span class="icon green"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5.5L4.2 7.5L8 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      Quality Task Info
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px 20px;">
+      <div style="grid-row:span 2;">
         <label class="field-label" for="qualityTask">Quality Task</label>
         <select id="qualityTask" onchange="loadTaskData(); autoFillFromCriteria();"></select>
       </div>
+      <div>
+        <label class="field-label">Expected Status</label>
+        <div id="expectedStatusDisplay" style="padding:9px 12px;background:#f3f4f6;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;color:var(--text-secondary);min-height:38px;">—</div>
+        <input type="hidden" id="expectedStatus">
+      </div>
+      <div>
+        <label class="field-label">Level of Completion</label>
+        <div id="completionLevelDisplay" style="padding:9px 12px;background:#f3f4f6;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;color:var(--text-secondary);min-height:38px;line-height:1.5;">—</div>
+        <input type="hidden" id="completionLevel">
+      </div>
+      <div>
+        <label class="field-label" for="actualStatus">Actual Status</label>
+        <select id="actualStatus" onchange="onRatingOrStatusChange()">
+          <option>Following Plan</option>
+          <option>Completed</option>
+          <option>Late vs planning</option>
+          <option>N/A</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="rating">Rating</label>
+        <select id="rating" onchange="onRatingOrStatusChange()">
+          <option>Green</option><option>Yellow</option><option>Red</option><option>N/A</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CARD 4: RISK INFO (shown only when Rating = Red) ==================== -->
+  <div class="card" id="riskInfoCard" style="display:none;border:1px solid rgba(240,68,56,.25);background:rgba(254,243,242,.6);">
+    <p class="section-label" style="color:var(--error);">
+      <span class="icon" style="background:var(--error-bg);color:var(--error);"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1.5L9 8.5H1L5 1.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 4.5v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5" cy="7.5" r=".5" fill="currentColor"/></svg></span>
+      Risk Info
+      <span style="margin-left:auto;font-size:10px;font-weight:500;color:var(--error);opacity:.7;text-transform:none;letter-spacing:0;">Visible only when Rating is Red</span>
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;">
+      <div>
+        <label class="field-label" for="riskDescription">Risk Description / Risk Mitigation</label>
+        <textarea id="riskDescription" style="min-height:80px;" placeholder="Describe the risk and mitigation steps..."></textarea>
+      </div>
+      <div>
+        <label class="field-label" for="riskLevel">Risk Level</label>
+        <select id="riskLevel">
+          <option value="">Select Risk Level</option>
+          <option>Low</option>
+          <option>Med</option>
+          <option>High</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CARD 5: ENGINEER INFO ==================== -->
+  <div class="card">
+    <p class="section-label">
+      <span class="icon blue"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="3.5" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 9c0-1.93 1.57-3.5 3.5-3.5s3.5 1.57 3.5 3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+      Engineer Info
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;">
       <div>
         <label class="field-label" for="qualityEngineer">Quality Engineer</label>
         <select id="qualityEngineer" style="margin-bottom:6px;"><option value="">Select Engineer</option></select>
@@ -609,52 +691,33 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
         </button>
       </div>
     </div>
+  </div>
 
-    <!-- ROW 2: Detail Fields -->
-    <div class="form-grid">
+  <!-- ==================== CARD 6: PLANNING / FOLLOW UP ==================== -->
+  <div class="card">
+    <p class="section-label">
+      <span class="icon green"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="2" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M3 1v2M7 1v2M1 5h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+      Planning / Follow Up
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px 20px;margin-bottom:16px;">
       <div>
-        <label class="field-label" for="expectedStatus">Expected Status</label>
-        <select id="expectedStatus">
-          <option>Planned</option>
-          <option>To be planned before next gate.</option>
-          <option>Started</option>
-          <option>In Progress</option>
-          <option>Start/Complete</option>
-          <option>Completed</option>
-          <option>N/A</option>
-        </select>
+        <label class="field-label" for="followUpWeek">Last Update (YYWW)</label>
+        <input type="text" id="followUpWeek" placeholder="e.g. 2512">
       </div>
       <div>
-        <label class="field-label" for="actualStatus">Actual Status</label>
-        <select id="actualStatus">
-          <option>Following Plan</option>
-          <option>Completed</option>
-          <option>Late vs planning</option>
-          <option>N/A</option>
-        </select>
+        <label class="field-label" for="nextUpdateWeek">Next Update (YYWW)</label>
+        <input type="text" id="nextUpdateWeek" placeholder="e.g. 2514">
       </div>
       <div>
-        <label class="field-label" for="rating">Rating</label>
-        <select id="rating">
-          <option>Green</option><option>Yellow</option><option>Red</option><option>N/A</option>
-        </select>
+        <label class="field-label" for="plannedStart">Planned Start (YYWW)</label>
+        <input type="text" id="plannedStart" placeholder="e.g. 2510">
       </div>
       <div>
-        <label class="field-label" for="followUpWeek">Follow-up Week</label>
-        <input type="week" id="followUpWeek">
+        <label class="field-label" for="plannedEnd">Planned Completion (YYWW)</label>
+        <input type="text" id="plannedEnd" placeholder="e.g. 2518">
       </div>
-      <div>
-        <label class="field-label" for="plannedStart">Planned Start</label>
-        <input type="date" id="plannedStart">
-      </div>
-      <div>
-        <label class="field-label" for="plannedEnd">Planned End</label>
-        <input type="date" id="plannedEnd">
-      </div>
-      <div>
-        <label class="field-label" for="completionLevel">Level of Completion (Gate-specific)</label>
-        <textarea id="completionLevel" style="min-height:80px;"></textarea>
-      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;">
       <div>
         <label class="field-label" for="comments">Comments</label>
         <textarea id="comments" style="min-height:80px;" placeholder="Add any comments..."></textarea>
@@ -664,7 +727,7 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
         <textarea id="deviationText" style="min-height:80px;" placeholder="Describe any deviation or support needed..."></textarea>
       </div>
     </div>
-    <hr class="divider">
+    <hr class="divider" style="margin:20px 0 16px;">
     <button class="btn-primary btn-save" onclick="saveTask()">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 7l3.5 3.5L11 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Save / Update Task
@@ -742,15 +805,17 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
     <table>
       <thead>
         <tr>
-          <th colspan="4" class="th-blue" style="text-align:left;">Decided Quality Tasks</th>
+          <th colspan="6" class="th-blue" style="text-align:left;">Decided Quality Tasks</th>
           <th colspan="7" class="th-green" style="text-align:left;">Quality Task Report</th>
-          <th colspan="3" class="th-purple" style="text-align:left;">Follow-Up / Planning</th>
+          <th colspan="4" class="th-purple" style="text-align:left;">Follow-Up / Planning</th>
           <th colspan="1" class="th-orange" style="text-align:left;">Details</th>
           <th class="th-purple" style="text-align:center;font-size:13px;">&#9881;</th>
         </tr>
         <tr>
           <th>Project</th>
           <th>Item</th>
+          <th>Impacted Product</th>
+          <th>FG/VMS/ORG</th>
           <th>Quality Task</th>
           <th>Gate</th>
           <th>Quality Eng.</th>
@@ -885,6 +950,32 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
     <div class="modal-actions">
       <button class="btn-cancel-eng" onclick="closeItemModal()">Cancel</button>
       <button class="btn-save-eng" onclick="confirmAddItem()">Add Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADD IMPACTED PRODUCT MODAL ==================== -->
+<div class="modal-overlay" id="impactedProductModal" onclick="if(event.target===this)closeImpactedProductModal()">
+  <div class="modal-card">
+    <p class="modal-title">Add Impacted Product</p>
+    <p class="modal-subtitle">This product will be saved for this project only.</p>
+    <input id="newImpactedProductInput" type="text" placeholder="e.g. Turbo Charger Assembly" onkeydown="if(event.key==='Enter') confirmAddImpactedProduct()">
+    <div class="modal-actions">
+      <button class="btn-cancel-eng" onclick="closeImpactedProductModal()">Cancel</button>
+      <button class="btn-save-eng" onclick="confirmAddImpactedProduct()">Add Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADD FG/VMS/ORG MODAL ==================== -->
+<div class="modal-overlay" id="fgVmsOrgModal" onclick="if(event.target===this)closeFgVmsOrgModal()">
+  <div class="modal-card">
+    <p class="modal-title">Add Custom FG/VMS/ORG</p>
+    <p class="modal-subtitle">This entry will be available globally across all projects.</p>
+    <input id="newFgVmsOrgInput" type="text" placeholder="e.g. Custom Entry" onkeydown="if(event.key==='Enter') confirmAddFgVmsOrg()">
+    <div class="modal-actions">
+      <button class="btn-cancel-eng" onclick="closeFgVmsOrgModal()">Cancel</button>
+      <button class="btn-save-eng" onclick="confirmAddFgVmsOrg()">Add Entry</button>
     </div>
   </div>
 </div>
@@ -1708,6 +1799,10 @@ function autoFillFromCriteria() {
     const c = gateCriteria[gate][task];
     document.getElementById("expectedStatus").value = c.expectedStatus || "";
     document.getElementById("completionLevel").value = c.completionLevel || "";
+    const esDisp = document.getElementById("expectedStatusDisplay");
+    const clDisp = document.getElementById("completionLevelDisplay");
+    if (esDisp) esDisp.textContent = c.expectedStatus || "—";
+    if (clDisp) clDisp.textContent = c.completionLevel || "—";
   }
 }
 
@@ -1814,6 +1909,121 @@ const qualityTasks = [
 ];
 
 let store = {}, currentProject = "";
+let impactedProductsMaster = {}; // per-project: { projectId: [name, ...] }
+let fgVmsOrgMaster = [];         // global list
+
+// ===== IMPACTED PRODUCT =====
+function loadImpactedProducts() {
+  if (!currentProject) return;
+  const stored = JSON.parse(localStorage.getItem("impactedProducts_" + currentProject) || "[]");
+  impactedProductsMaster[currentProject] = stored;
+  populateImpactedProductDropdown();
+  fetch("/project-impacted-products/" + encodeURIComponent(currentProject))
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.impacted_products) {
+        const merged = [...new Set([...stored, ...data.impacted_products])];
+        impactedProductsMaster[currentProject] = merged;
+        localStorage.setItem("impactedProducts_" + currentProject, JSON.stringify(merged));
+        populateImpactedProductDropdown();
+      }
+    }).catch(() => {});
+}
+
+function populateImpactedProductDropdown() {
+  const dd = document.getElementById("impactedProductSelect");
+  if (!dd) return;
+  const cur = dd.value;
+  dd.innerHTML = '<option value="">Select Impacted Product</option>';
+  const list = (impactedProductsMaster[currentProject] || []).sort((a,b) => a.localeCompare(b));
+  list.forEach(name => { const o = document.createElement("option"); o.value = o.textContent = name; dd.appendChild(o); });
+  if (cur) dd.value = cur;
+}
+
+function openImpactedProductModal() {
+  if (!currentProject) { showToast("Enter a Project ID first"); return; }
+  document.getElementById("newImpactedProductInput").value = "";
+  document.getElementById("impactedProductModal").classList.add("active");
+  setTimeout(() => document.getElementById("newImpactedProductInput").focus(), 50);
+}
+function closeImpactedProductModal() { document.getElementById("impactedProductModal").classList.remove("active"); }
+function confirmAddImpactedProduct() {
+  const name = document.getElementById("newImpactedProductInput").value.trim();
+  if (!name) return;
+  if (!impactedProductsMaster[currentProject]) impactedProductsMaster[currentProject] = [];
+  if (!impactedProductsMaster[currentProject].includes(name)) {
+    impactedProductsMaster[currentProject].push(name);
+    localStorage.setItem("impactedProducts_" + currentProject, JSON.stringify(impactedProductsMaster[currentProject]));
+    fetch("/save-impacted-product", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({project_id: currentProject, name}) }).catch(() => {});
+  }
+  populateImpactedProductDropdown();
+  document.getElementById("impactedProductSelect").value = name;
+  closeImpactedProductModal();
+}
+
+// ===== FG/VMS/ORG =====
+function loadFgVmsOrg() {
+  const stored = JSON.parse(localStorage.getItem("fgVmsOrgMaster") || '["FG","VMS","ORG"]');
+  fgVmsOrgMaster = stored;
+  populateFgVmsOrgDropdown();
+  fetch("/fgvmsorg")
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.fgvmsorg) {
+        const merged = [...new Set([...data.fgvmsorg])];
+        fgVmsOrgMaster = merged;
+        localStorage.setItem("fgVmsOrgMaster", JSON.stringify(merged));
+        populateFgVmsOrgDropdown();
+      }
+    }).catch(() => {});
+}
+
+function populateFgVmsOrgDropdown() {
+  const dd = document.getElementById("fgVmsOrgSelect");
+  if (!dd) return;
+  const cur = dd.value;
+  dd.innerHTML = '<option value="">Select FG/VMS/ORG</option>';
+  const sorted = [...fgVmsOrgMaster].sort((a,b) => a.localeCompare(b));
+  sorted.forEach(name => { const o = document.createElement("option"); o.value = o.textContent = name; dd.appendChild(o); });
+  if (cur) dd.value = cur;
+}
+
+function openFgVmsOrgModal() {
+  document.getElementById("newFgVmsOrgInput").value = "";
+  document.getElementById("fgVmsOrgModal").classList.add("active");
+  setTimeout(() => document.getElementById("newFgVmsOrgInput").focus(), 50);
+}
+function closeFgVmsOrgModal() { document.getElementById("fgVmsOrgModal").classList.remove("active"); }
+function confirmAddFgVmsOrg() {
+  const name = document.getElementById("newFgVmsOrgInput").value.trim();
+  if (!name) return;
+  if (!fgVmsOrgMaster.includes(name)) {
+    fgVmsOrgMaster.push(name);
+    localStorage.setItem("fgVmsOrgMaster", JSON.stringify(fgVmsOrgMaster));
+    fetch("/save-fgvmsorg", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({name}) }).catch(() => {});
+  }
+  populateFgVmsOrgDropdown();
+  document.getElementById("fgVmsOrgSelect").value = name;
+  closeFgVmsOrgModal();
+}
+
+// ===== RISK INFO TOGGLE =====
+function onRatingOrStatusChange() {
+  const rating = document.getElementById("rating").value;
+  const card = document.getElementById("riskInfoCard");
+  if (rating === "Red") {
+    card.style.display = "";
+  } else {
+    card.style.display = "none";
+    document.getElementById("riskDescription").value = "";
+    document.getElementById("riskLevel").value = "";
+  }
+  // keep existing N/A deviation logic
+  const actualStatus = document.getElementById("actualStatus").value;
+  if (actualStatus === "N/A" || rating === "N/A") {
+    document.getElementById("deviationSelect").value = "Yes";
+  }
+}
 
 // ===== INIT =====
 window.onload = function () {
@@ -1827,6 +2037,7 @@ window.onload = function () {
     document.getElementById("qualityTask").add(o);
   });
   loadEngineers();
+  loadFgVmsOrg();
   buildGateTimeline();
   // Hide login, show landing first
   document.getElementById('loginOverlay').classList.add('hidden');
@@ -1893,17 +2104,22 @@ function loadProject() {
           const t = store[currentProject][r.item][r.quality_task];
           t.qe = r.quality_engineer || t.qe || "";
           t.resp = r.responsible_engineer || t.resp || "";
+          if (r.impacted_product) t.impacted_product = r.impacted_product;
+          if (r.fg_vms_org) t.fg_vms_org = r.fg_vms_org;
           t.gates[r.gate] = {
             expected_status: r.expected_status || "",
             actual_status: r.actual_status || "",
             rating: r.rating || "",
             followup_week: r.followup_week || "",
+            next_update_week: r.next_update_week || "",
             planned_start: r.planned_start || "",
             planned_end: r.planned_end || "",
             completion_level: r.completion_level || "",
             comments: r.comments || "",
             deviation: r.deviation || "No",
-            deviation_text: r.deviation_text || ""
+            deviation_text: r.deviation_text || "",
+            risk_description: r.risk_description || "",
+            risk_level: r.risk_level || ""
           };
           if (r.next_gate) t.next_gate = r.next_gate;
           if (r.deviation === "Yes") {
@@ -1943,6 +2159,7 @@ function loadProject() {
       setLoadingStep('Rendering task table \u2026');
       renderTable();
       hideLoading();
+      loadImpactedProducts();
       showToast("Project loaded — Current Gate: " + currentGateValue);
     })
     .catch(err => {
@@ -1971,12 +2188,26 @@ function loadTaskData() {
   document.getElementById("actualStatus").value = gd.actual_status || "Following Plan";
   document.getElementById("rating").value = gd.rating || "Green";
   document.getElementById("followUpWeek").value = gd.followup_week || "";
+  document.getElementById("nextUpdateWeek").value = gd.next_update_week || "";
   document.getElementById("plannedStart").value = gd.planned_start || "";
   document.getElementById("plannedEnd").value = gd.planned_end || "";
   document.getElementById("completionLevel").value = gd.completion_level || "";
   document.getElementById("comments").value = gd.comments || "";
   document.getElementById("deviationSelect").value = gd.deviation || "No";
   document.getElementById("deviationText").value = gd.deviation_text || "";
+  // Risk info
+  document.getElementById("riskDescription").value = gd.risk_description || "";
+  document.getElementById("riskLevel").value = gd.risk_level || "";
+  const riskCard = document.getElementById("riskInfoCard");
+  if (riskCard) riskCard.style.display = (gd.rating === "Red") ? "" : "none";
+  // Sync read-only display fields
+  const esDisp = document.getElementById("expectedStatusDisplay");
+  const clDisp = document.getElementById("completionLevelDisplay");
+  if (esDisp) esDisp.textContent = gd.expected_status || "—";
+  if (clDisp) clDisp.textContent = gd.completion_level || "—";
+  // Per-task fields
+  if (t.impacted_product) document.getElementById("impactedProductSelect").value = t.impacted_product;
+  if (t.fg_vms_org) document.getElementById("fgVmsOrgSelect").value = t.fg_vms_org;
 }
 
 // ===== SAVE TASK =====
@@ -2045,17 +2276,22 @@ function executeSave() {
   t.qe = document.getElementById("qualityEngineer").value;
   t.resp = document.getElementById("responsibleEngineer").value;
   t.next_gate = document.getElementById("nextGateStartDate").value;
+  t.impacted_product = document.getElementById("impactedProductSelect").value;
+  t.fg_vms_org = document.getElementById("fgVmsOrgSelect").value;
   t.gates[gate] = {
     expected_status: document.getElementById("expectedStatus").value,
     actual_status: document.getElementById("actualStatus").value,
     rating: document.getElementById("rating").value,
     followup_week: document.getElementById("followUpWeek").value,
+    next_update_week: document.getElementById("nextUpdateWeek").value,
     planned_start: document.getElementById("plannedStart").value,
     planned_end: document.getElementById("plannedEnd").value,
     completion_level: document.getElementById("completionLevel").value,
     comments: document.getElementById("comments").value,
     deviation: document.getElementById("deviationSelect").value,
-    deviation_text: document.getElementById("deviationText").value
+    deviation_text: document.getElementById("deviationText").value,
+    risk_description: document.getElementById("riskDescription").value,
+    risk_level: document.getElementById("riskLevel").value
   };
 
   // Compute changes for audit
@@ -2081,13 +2317,16 @@ function executeSave() {
     actual_status: document.getElementById("actualStatus").value,
     rating: document.getElementById("rating").value,
     followup_week: document.getElementById("followUpWeek").value,
+    next_update_week: document.getElementById("nextUpdateWeek").value,
     planned_start: document.getElementById("plannedStart").value,
     planned_end: document.getElementById("plannedEnd").value,
     completion_level: document.getElementById("completionLevel").value,
     comments: document.getElementById("comments").value,
     next_gate: document.getElementById("nextGateStartDate").value,
     deviation: document.getElementById("deviationSelect").value,
-    deviation_text: document.getElementById("deviationText").value
+    deviation_text: document.getElementById("deviationText").value,
+    risk_description: document.getElementById("riskDescription").value,
+    risk_level: document.getElementById("riskLevel").value
   };
   fetch("/save-task", {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -2188,11 +2427,13 @@ function renderTable() {
         document.getElementById("qualityTask").value = task;
         loadTaskData();
         autoFillFromCriteria();
-        document.querySelector('.card:nth-child(2)').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelector('.card:nth-child(3)').scrollIntoView({ behavior: 'smooth', block: 'start' });
       };
       r.innerHTML =
         '<td style="font-weight:600;">' + escHtml(currentProject) + '</td>' +
         '<td>' + escHtml(item) + '</td>' +
+        '<td>' + escHtml(t.impacted_product || '-') + '</td>' +
+        '<td>' + escHtml(t.fg_vms_org || '-') + '</td>' +
         '<td>' + escHtml(task) + '</td>' +
         '<td><span class="badge badge-gray">' + escHtml(gate) + '</span></td>' +
         '<td>' + escHtml(t.qe || '-') + '</td>' +
