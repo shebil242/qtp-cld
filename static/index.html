@@ -127,11 +127,9 @@ thead tr:last-child th { padding: 10px 14px; font-size: 11px; font-weight: 600; 
 tbody tr { border-bottom: 1px solid var(--border-light); transition: background .12s; position: relative; }
 tbody tr:last-child { border-bottom: none; }
 tbody tr:hover { background: #f8faff; }
-tbody tr[data-clickable]:hover { background: #eef2ff !important; }
-tbody tr[data-clickable]:hover .badge { transform: translateY(-1px) scale(1.07); box-shadow: 0 2px 6px rgba(0,0,0,.13); transition: transform .15s, box-shadow .15s; display: inline-flex; }
-tbody tr[data-clickable]:hover td { color: var(--accent); transition: color .12s; }
-@keyframes fieldPulse { 0%,8% { background: rgba(255,208,60,.45); box-shadow: 0 0 0 3px rgba(255,208,60,.4); } 100% { background: transparent; box-shadow: none; } }
-.field-highlight { animation: fieldPulse 3.5s ease forwards !important; border-radius: 6px !important; outline: none !important; }
+tbody tr[data-clickable] { cursor: pointer; }
+tbody tr[data-clickable]:hover { background: #eef3ff !important; box-shadow: inset 3px 0 0 var(--accent); }
+tbody tr[data-clickable]:hover .badge { transform: translateY(-2px) scale(1.1); box-shadow: 0 3px 8px rgba(0,0,0,.18); }
 td { padding: 11px 14px; color: var(--text-primary); vertical-align: middle; }
 .cell-truncate { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; position: relative; }
 .cell-truncate:hover { overflow: visible; white-space: normal; }
@@ -140,7 +138,7 @@ td .tooltip-wrap .tooltip-text { white-space: nowrap; overflow: hidden; text-ove
 td .tooltip-wrap .tooltip-full { display: none; position: fixed; background: var(--volvo-blue); color: #fff; padding: 8px 12px; border-radius: var(--radius-xs); font-size: 12px; white-space: pre-wrap; max-width: 360px; min-width: 200px; z-index: 9999; box-shadow: var(--shadow-lg); line-height: 1.5; pointer-events: none; }
 
 /* ===== BADGES ===== */
-.badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 600; white-space: nowrap; transition: transform .15s, box-shadow .15s; }
 .badge-green { background: var(--success-bg); color: #067647; }
 .badge-yellow { background: var(--warning-bg); color: #b54708; }
 .badge-red { background: var(--error-bg); color: #b42318; }
@@ -1603,7 +1601,9 @@ function computeDashboard() {
           (d.green  ? `<span style="display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:700;color:#067647;"><span style="width:6px;height:6px;border-radius:50%;background:#12b76a;display:inline-block;"></span>${d.green}</span>` : '') +
           (d.yellow ? `<span style="display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:700;color:#b54708;"><span style="width:6px;height:6px;border-radius:50%;background:#f79009;display:inline-block;"></span>${d.yellow}</span>` : '') +
           (d.red    ? `<span style="display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:700;color:#b42318;"><span style="width:6px;height:6px;border-radius:50%;background:#f04438;display:inline-block;"></span>${d.red}</span>` : '');
-        return `<div class="dash-eng-chip"><span class="dash-eng-name">${name}</span><span class="dash-eng-count">${d.total}</span>${dots ? `<span style="display:inline-flex;gap:5px;align-items:center;">${dots}</span>` : ''}</div>`;
+        const safeName = name.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+        const firstName = safeName.split(/\s+/)[0];
+        return `<div class="dash-eng-chip"><span class="dash-eng-name" title="${safeName}" style="cursor:default;">${firstName}</span><span class="dash-eng-count">${d.total}</span>${dots ? `<span style="display:inline-flex;gap:5px;align-items:center;">${dots}</span>` : ''}</div>`;
       }).join('');
     }
   }
@@ -2634,12 +2634,6 @@ function truncCell(text, maxLen) {
   return '<span class="tooltip-wrap" title="' + safe.replace(/"/g, '&quot;') + '"><span class="tooltip-text">' + display + '</span><span class="tooltip-full">' + safe.replace(/\n/g, '<br>') + '</span></span>';
 }
 
-function engCell(name) {
-  if (!name) return '-';
-  var first = escHtml(name.trim().split(/\s+/)[0]);
-  return '<span title="' + escHtml(name) + '" style="cursor:default;">' + first + '</span>';
-}
-
 function renderTable() {
   const taskTable = document.getElementById("taskTable");
   taskTable.innerHTML = "";
@@ -2703,10 +2697,14 @@ function renderTable() {
             var el = document.getElementById(targetFieldId);
             if (el) {
               el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              el.classList.add('field-highlight');
-              setTimeout(function() { el.classList.remove('field-highlight'); }, 3600);
+              el.style.transition = 'box-shadow .25s';
+              el.style.boxShadow = '0 0 0 3px rgba(255,165,0,.85), 0 0 18px rgba(255,165,0,.35)';
+              setTimeout(function() {
+                el.style.boxShadow = '';
+                setTimeout(function() { el.style.transition = ''; }, 350);
+              }, 2800);
             }
-          }, 500);
+          }, 700);
         }
       };
       r.innerHTML =
@@ -2716,8 +2714,8 @@ function renderTable() {
         '<td>' + escHtml(t.fg_vms_org || '-') + '</td>' +
         '<td>' + escHtml(task) + '</td>' +
         '<td><span class="badge badge-gray">' + escHtml(gate) + '</span></td>' +
-        '<td>' + engCell(t.qe) + '</td>' +
-        '<td>' + engCell(t.resp) + '</td>' +
+        '<td>' + escHtml(t.qe || '-') + '</td>' +
+        '<td>' + escHtml(t.resp || '-') + '</td>' +
         '<td>' + (hasFilled ? escHtml(gd.expected_status || '-') : '-') + '</td>' +
         '<td>' + (hasFilled ? escHtml(gd.actual_status || '-') : '-') + '</td>' +
         '<td>' + (hasFilled ? ratingBadge(gd.rating) : '-') + '</td>' +
