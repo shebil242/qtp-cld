@@ -130,6 +130,7 @@ tbody tr:hover { background: #f8faff; }
 tbody tr[data-clickable] { cursor: pointer; }
 tbody tr[data-clickable]:hover { background: #eef3ff !important; box-shadow: inset 3px 0 0 var(--accent); }
 tbody tr[data-clickable]:hover .badge { transform: translateY(-2px) scale(1.1); box-shadow: 0 3px 8px rgba(0,0,0,.18); }
+.glow-field { outline: 2.5px solid #f59e0b !important; outline-offset: 4px !important; box-shadow: 0 0 0 6px rgba(245,158,11,.18) !important; }
 td { padding: 11px 14px; color: var(--text-primary); vertical-align: middle; }
 .cell-truncate { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; position: relative; }
 .cell-truncate:hover { overflow: visible; white-space: normal; }
@@ -1602,8 +1603,7 @@ function computeDashboard() {
           (d.yellow ? `<span style="display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:700;color:#b54708;"><span style="width:6px;height:6px;border-radius:50%;background:#f79009;display:inline-block;"></span>${d.yellow}</span>` : '') +
           (d.red    ? `<span style="display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:700;color:#b42318;"><span style="width:6px;height:6px;border-radius:50%;background:#f04438;display:inline-block;"></span>${d.red}</span>` : '');
         const safeName = name.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-        const firstName = safeName.split(/\s+/)[0];
-        return `<div class="dash-eng-chip"><span class="dash-eng-name" title="${safeName}" style="cursor:default;">${firstName}</span><span class="dash-eng-count">${d.total}</span>${dots ? `<span style="display:inline-flex;gap:5px;align-items:center;">${dots}</span>` : ''}</div>`;
+        return `<div class="dash-eng-chip"><span class="dash-eng-name">${safeName}</span><span class="dash-eng-count">${d.total}</span>${dots ? `<span style="display:inline-flex;gap:5px;align-items:center;">${dots}</span>` : ''}</div>`;
       }).join('');
     }
   }
@@ -2679,11 +2679,12 @@ function renderTable() {
         var clickedTd = e.target.closest('td');
         var colIdx = clickedTd ? clickedTd.cellIndex : -1;
         var colToField = {
-          6: 'qualityEngineer', 7: 'responsibleEngineer',
-          8: 'expectedStatusDisplay', 9: 'actualStatus', 10: 'rating',
-          11: 'completionLevelDisplay', 12: 'deviationText', 13: 'followUpWeek',
-          14: 'plannedStart', 15: 'plannedEnd',
-          16: 'comments', 17: 'riskDescription', 18: 'riskLevel'
+          2: 'impactedProductSelect', 3: 'fgVmsOrgSelect',
+          6: 'qualityEngineer',        7: 'responsibleEngineer',
+          8: 'expectedStatusDisplay',  9: 'actualStatus',         10: 'rating',
+          11: 'completionLevelDisplay',12: 'deviationText',        13: 'followUpWeek',
+          14: 'plannedStart',          15: 'plannedEnd',
+          16: 'comments',             17: 'riskDescription',      18: 'riskLevel'
         };
         var targetFieldId = colToField[colIdx] || null;
         document.getElementById("itemSelect").value = item;
@@ -2691,19 +2692,18 @@ function renderTable() {
         document.getElementById("qualityTask").value = task;
         loadTaskData();
         autoFillFromCriteria();
-        document.querySelector('.card:nth-child(3)').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Single scroll — go straight to the specific field if known, else scroll to the form card
+        var scrollEl = targetFieldId
+          ? document.getElementById(targetFieldId)
+          : document.querySelector('.card:nth-child(3)');
+        if (scrollEl) scrollEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Glow the field after scroll settles
         if (targetFieldId) {
           setTimeout(function() {
             var el = document.getElementById(targetFieldId);
-            if (el) {
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              el.style.transition = 'box-shadow .25s';
-              el.style.boxShadow = '0 0 0 3px rgba(255,165,0,.85), 0 0 18px rgba(255,165,0,.35)';
-              setTimeout(function() {
-                el.style.boxShadow = '';
-                setTimeout(function() { el.style.transition = ''; }, 350);
-              }, 2800);
-            }
+            if (!el) return;
+            el.classList.add('glow-field');
+            setTimeout(function() { el.classList.remove('glow-field'); }, 2800);
           }, 700);
         }
       };
