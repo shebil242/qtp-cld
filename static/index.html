@@ -114,7 +114,8 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); }
 .divider { border: none; border-top: 1px solid var(--border-light); margin: 22px 0; }
 
 /* ===== TABLE ===== */
-.table-wrap { overflow-x: auto; overflow-y: auto; max-height: 420px; border-radius: var(--radius); box-shadow: 0 1px 3px rgba(16,24,40,.06), 0 6px 16px rgba(16,24,40,.08), 0 16px 40px rgba(16,24,40,.04); border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); margin-top: 4px; }
+.table-outer { border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 3px rgba(16,24,40,.06), 0 6px 16px rgba(16,24,40,.08), 0 16px 40px rgba(16,24,40,.04); border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); margin-top: 4px; margin-bottom: 20px; }
+.table-wrap { overflow-x: auto; overflow-y: auto; max-height: 420px; }
 thead { position: sticky; top: 0; z-index: 10; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 thead tr:first-child th { padding: 12px 14px 10px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
@@ -598,7 +599,7 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
   </div>
 
   <!-- ==================== TABLE ==================== -->
-  <div class="table-wrap">
+  <div class="table-outer"><div class="table-wrap">
     <table>
       <thead>
         <tr>
@@ -633,7 +634,7 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
       </thead>
       <tbody id="taskTable"></tbody>
     </table>
-  </div>
+  </div></div>
 
   <!-- ==================== CARD 1: PROJECT CONTEXT ==================== -->
   <div class="card">
