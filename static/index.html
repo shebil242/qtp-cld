@@ -114,7 +114,8 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); }
 .divider { border: none; border-top: 1px solid var(--border-light); margin: 22px 0; }
 
 /* ===== TABLE ===== */
-.table-wrap { overflow-x: auto; border-radius: var(--radius); box-shadow: 0 1px 3px rgba(16,24,40,.06), 0 6px 16px rgba(16,24,40,.08), 0 16px 40px rgba(16,24,40,.04); border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); margin-top: 4px; }
+.table-wrap { overflow-x: auto; overflow-y: auto; max-height: 420px; border-radius: var(--radius); box-shadow: 0 1px 3px rgba(16,24,40,.06), 0 6px 16px rgba(16,24,40,.08), 0 16px 40px rgba(16,24,40,.04); border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); margin-top: 4px; }
+thead { position: sticky; top: 0; z-index: 10; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 thead tr:first-child th { padding: 12px 14px 10px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
 .th-blue { background: #f0f4ff; color: #3a5bd9; }
@@ -530,6 +531,110 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
   <!-- ==================== GATE TIMELINE ==================== -->
   <div class="gate-timeline" id="gateTimeline"></div>
 
+  <!-- ==================== ROLE FILTER ==================== -->
+  <div class="role-filter-bar">
+    <span class="filter-label">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4.5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 13c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Viewing as
+    </span>
+    <select id="currentUserSelect" onchange="onUserFilterChange()" style="max-width:220px;">
+      <option value="">All Engineers (No Filter)</option>
+    </select>
+    <button class="filter-toggle" id="myTasksBtn" onclick="toggleMyTasks()" type="button">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6L4.5 9L10.5 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      My Tasks Only
+    </button>
+    <button class="btn-adv-filter" id="advFilterBtn" onclick="openAdvFilter()" type="button">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3h10M3 6h6M5 9h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Filter
+    </button>
+  </div>
+
+  <!-- ==================== ADVANCED FILTER MODAL ==================== -->
+  <div class="adv-filter-overlay" id="advFilterOverlay" onclick="if(event.target===this)closeAdvFilter()">
+    <div class="adv-filter-panel">
+      <div class="adv-filter-title">
+        <span>Filter Tasks</span>
+        <button onclick="closeAdvFilter()" style="background:none;border:none;cursor:pointer;color:var(--text-tertiary);display:flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="adv-filter-section">
+        <p class="adv-filter-section-label">Rating</p>
+        <div class="adv-filter-chips" id="afRating">
+          <span class="adv-chip" data-val="Green" onclick="toggleChip(this,'afRating')">&#x1F7E2; Green</span>
+          <span class="adv-chip" data-val="Yellow" onclick="toggleChip(this,'afRating')">&#x1F7E1; Yellow</span>
+          <span class="adv-chip" data-val="Red" onclick="toggleChip(this,'afRating')">&#x1F534; Red</span>
+          <span class="adv-chip" data-val="N/A" onclick="toggleChip(this,'afRating')">&#x2B1C; N/A</span>
+        </div>
+      </div>
+      <div class="adv-filter-section">
+        <p class="adv-filter-section-label">Actual Status</p>
+        <div class="adv-filter-chips" id="afStatus">
+          <span class="adv-chip" data-val="Following Plan" onclick="toggleChip(this,'afStatus')">Following Plan</span>
+          <span class="adv-chip" data-val="Completed" onclick="toggleChip(this,'afStatus')">Completed</span>
+          <span class="adv-chip" data-val="Late vs planning" onclick="toggleChip(this,'afStatus')">Late vs planning</span>
+          <span class="adv-chip" data-val="N/A" onclick="toggleChip(this,'afStatus')">N/A</span>
+        </div>
+      </div>
+      <div class="adv-filter-section">
+        <p class="adv-filter-section-label">Deviation</p>
+        <div class="adv-filter-chips" id="afDeviation">
+          <span class="adv-chip" data-val="deviated" onclick="toggleChip(this,'afDeviation')">&#x26A0;&#xFE0F; Deviated tasks only</span>
+          <span class="adv-chip" data-val="no-deviation" onclick="toggleChip(this,'afDeviation')">&#x2705; Non-deviated only</span>
+        </div>
+      </div>
+      <div class="adv-filter-section">
+        <p class="adv-filter-section-label">Quality Engineer</p>
+        <div class="adv-filter-chips" id="afQE"></div>
+      </div>
+      <div class="adv-filter-section">
+        <p class="adv-filter-section-label">Responsible Engineer</p>
+        <div class="adv-filter-chips" id="afRE"></div>
+      </div>
+      <div class="adv-filter-actions">
+        <button class="btn-adv-reset" onclick="resetAdvFilter()">Reset All</button>
+        <button class="btn-adv-apply" onclick="applyAdvFilter()">Apply Filter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TABLE ==================== -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th colspan="6" class="th-blue" style="text-align:left;">Decided Quality Tasks</th>
+          <th colspan="7" class="th-green" style="text-align:left;">Quality Task Report</th>
+          <th colspan="4" class="th-purple" style="text-align:left;">Follow-Up / Planning</th>
+          <th colspan="3" class="th-orange" style="text-align:left;">Details</th>
+          <th class="th-purple" style="text-align:center;font-size:13px;">&#9881;</th>
+        </tr>
+        <tr>
+          <th>Project</th>
+          <th>Item</th>
+          <th>Impacted Product</th>
+          <th>FG/VMS/ORG</th>
+          <th>Quality Task</th>
+          <th>Gate</th>
+          <th>Quality Eng.</th>
+          <th>Responsible Eng.</th>
+          <th>Expected Status</th>
+          <th>Actual Status</th>
+          <th>Rating</th>
+          <th>Completion Level</th>
+          <th>Deviation</th>
+          <th>Follow-up</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Comments</th>
+          <th>Risk Description</th>
+          <th>Risk Level</th>
+          <th style="text-align:center;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="taskTable"></tbody>
+    </table>
+  </div>
+
   <!-- ==================== CARD 1: PROJECT CONTEXT ==================== -->
   <div class="card">
     <p class="section-label">
@@ -732,110 +837,6 @@ body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 7l3.5 3.5L11 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Save / Update Task
     </button>
-  </div>
-
-  <!-- ==================== ROLE FILTER ==================== -->
-  <div class="role-filter-bar">
-    <span class="filter-label">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4.5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 13c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-      Viewing as
-    </span>
-    <select id="currentUserSelect" onchange="onUserFilterChange()" style="max-width:220px;">
-      <option value="">All Engineers (No Filter)</option>
-    </select>
-    <button class="filter-toggle" id="myTasksBtn" onclick="toggleMyTasks()" type="button">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6L4.5 9L10.5 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      My Tasks Only
-    </button>
-    <button class="btn-adv-filter" id="advFilterBtn" onclick="openAdvFilter()" type="button">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3h10M3 6h6M5 9h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      Filter
-    </button>
-  </div>
-
-  <!-- ==================== ADVANCED FILTER MODAL ==================== -->
-  <div class="adv-filter-overlay" id="advFilterOverlay" onclick="if(event.target===this)closeAdvFilter()">
-    <div class="adv-filter-panel">
-      <div class="adv-filter-title">
-        <span>Filter Tasks</span>
-        <button onclick="closeAdvFilter()" style="background:none;border:none;cursor:pointer;color:var(--text-tertiary);display:flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-      </div>
-      <div class="adv-filter-section">
-        <p class="adv-filter-section-label">Rating</p>
-        <div class="adv-filter-chips" id="afRating">
-          <span class="adv-chip" data-val="Green" onclick="toggleChip(this,'afRating')">🟢 Green</span>
-          <span class="adv-chip" data-val="Yellow" onclick="toggleChip(this,'afRating')">🟡 Yellow</span>
-          <span class="adv-chip" data-val="Red" onclick="toggleChip(this,'afRating')">🔴 Red</span>
-          <span class="adv-chip" data-val="N/A" onclick="toggleChip(this,'afRating')">⬜ N/A</span>
-        </div>
-      </div>
-      <div class="adv-filter-section">
-        <p class="adv-filter-section-label">Actual Status</p>
-        <div class="adv-filter-chips" id="afStatus">
-          <span class="adv-chip" data-val="Following Plan" onclick="toggleChip(this,'afStatus')">Following Plan</span>
-          <span class="adv-chip" data-val="Completed" onclick="toggleChip(this,'afStatus')">Completed</span>
-          <span class="adv-chip" data-val="Late vs planning" onclick="toggleChip(this,'afStatus')">Late vs planning</span>
-          <span class="adv-chip" data-val="N/A" onclick="toggleChip(this,'afStatus')">N/A</span>
-        </div>
-      </div>
-      <div class="adv-filter-section">
-        <p class="adv-filter-section-label">Deviation</p>
-        <div class="adv-filter-chips" id="afDeviation">
-          <span class="adv-chip" data-val="deviated" onclick="toggleChip(this,'afDeviation')">⚠️ Deviated tasks only</span>
-          <span class="adv-chip" data-val="no-deviation" onclick="toggleChip(this,'afDeviation')">✅ Non-deviated only</span>
-        </div>
-      </div>
-      <div class="adv-filter-section">
-        <p class="adv-filter-section-label">Quality Engineer</p>
-        <div class="adv-filter-chips" id="afQE"></div>
-      </div>
-      <div class="adv-filter-section">
-        <p class="adv-filter-section-label">Responsible Engineer</p>
-        <div class="adv-filter-chips" id="afRE"></div>
-      </div>
-      <div class="adv-filter-actions">
-        <button class="btn-adv-reset" onclick="resetAdvFilter()">Reset All</button>
-        <button class="btn-adv-apply" onclick="applyAdvFilter()">Apply Filter</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== TABLE ==================== -->
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th colspan="6" class="th-blue" style="text-align:left;">Decided Quality Tasks</th>
-          <th colspan="7" class="th-green" style="text-align:left;">Quality Task Report</th>
-          <th colspan="4" class="th-purple" style="text-align:left;">Follow-Up / Planning</th>
-          <th colspan="3" class="th-orange" style="text-align:left;">Details</th>
-          <th class="th-purple" style="text-align:center;font-size:13px;">&#9881;</th>
-        </tr>
-        <tr>
-          <th>Project</th>
-          <th>Item</th>
-          <th>Impacted Product</th>
-          <th>FG/VMS/ORG</th>
-          <th>Quality Task</th>
-          <th>Gate</th>
-          <th>Quality Eng.</th>
-          <th>Responsible Eng.</th>
-          <th>Expected Status</th>
-          <th>Actual Status</th>
-          <th>Rating</th>
-          <th>Completion Level</th>
-          <th>Deviation</th>
-          <th>Follow-up</th>
-          <th>Start</th>
-          <th>End</th>
-          <th>Comments</th>
-          <th>Risk Description</th>
-          <th>Risk Level</th>
-          <th style="text-align:center;">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="taskTable"></tbody>
-    </table>
   </div>
 
   <div class="footer">Volvo TTI &middot; Quality Task Plan &middot; Internal Use Only</div>
@@ -1134,6 +1135,16 @@ function openProject(pid) {
 
 function startNewQTP() {
   pendingProjectId = null;
+  currentProject = '';
+  store = {};
+  currentGateValue = 'PCI';
+  projectProgressGateIdx = -1;
+  gateStates = {};
+  activeFilter = null;
+  advFilter = {};
+  resetFormState();
+  document.getElementById('taskTable').innerHTML = '';
+  document.getElementById('gateTimeline').innerHTML = '';
   showLoginScreen();
 }
 
@@ -1340,7 +1351,7 @@ function applyRagFilter(gate, type) {
   renderTable();
   renderFilterBadge();
   closeDashboard();
-  setTimeout(() => document.querySelector('.table-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+  // table is now at top of page, no scroll needed
 }
 
 function clearRagFilter() {
