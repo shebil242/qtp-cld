@@ -127,7 +127,11 @@ thead tr:last-child th { padding: 10px 14px; font-size: 11px; font-weight: 600; 
 tbody tr { border-bottom: 1px solid var(--border-light); transition: background .12s; position: relative; }
 tbody tr:last-child { border-bottom: none; }
 tbody tr:hover { background: #f8faff; }
-tbody tr[data-clickable]:hover::after { content: 'Click to edit'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--volvo-blue); color: #fff; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 4px; pointer-events: none; z-index: 10; white-space: nowrap; opacity: .85; }
+tbody tr[data-clickable]:hover { background: #eef2ff !important; }
+tbody tr[data-clickable]:hover .badge { transform: translateY(-1px) scale(1.07); box-shadow: 0 2px 6px rgba(0,0,0,.13); transition: transform .15s, box-shadow .15s; display: inline-flex; }
+tbody tr[data-clickable]:hover td { color: var(--accent); transition: color .12s; }
+@keyframes fieldPulse { 0%,8% { background: rgba(255,208,60,.45); box-shadow: 0 0 0 3px rgba(255,208,60,.4); } 100% { background: transparent; box-shadow: none; } }
+.field-highlight { animation: fieldPulse 3.5s ease forwards !important; border-radius: 6px !important; outline: none !important; }
 td { padding: 11px 14px; color: var(--text-primary); vertical-align: middle; }
 .cell-truncate { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; position: relative; }
 .cell-truncate:hover { overflow: visible; white-space: normal; }
@@ -425,7 +429,7 @@ body.dark .eng-search-dropdown { background: #1c2129; border-color: #30363d; }
 .login-email-note { font-size: 11px; color: rgba(255,255,255,.4); margin-bottom: 6px; }
 .adv-filter-overlay { display: none; position: fixed; inset: 0; background: rgba(16,24,40,.5); backdrop-filter: blur(4px); z-index: 250; align-items: center; justify-content: center; }
 .adv-filter-overlay.active { display: flex; animation: modalBgIn .15s ease; }
-.adv-filter-panel { background: rgba(255,255,255,.92); backdrop-filter: blur(24px); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(16,24,40,.1), 0 20px 50px rgba(16,24,40,.15); border: 1px solid rgba(255,255,255,.45); padding: 28px 28px 24px; width: 500px; animation: modalSlide .25s cubic-bezier(.22,1,.36,1); }
+.adv-filter-panel { background: rgba(255,255,255,.92); backdrop-filter: blur(24px); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(16,24,40,.1), 0 20px 50px rgba(16,24,40,.15); border: 1px solid rgba(255,255,255,.45); padding: 28px 28px 24px; width: 500px; max-height: 88vh; overflow-y: auto; animation: modalSlide .25s cubic-bezier(.22,1,.36,1); }
 body.dark .adv-filter-panel { background: rgba(22,27,34,.92); border-color: rgba(255,255,255,.08); }
 .adv-filter-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
 .adv-filter-section { margin-bottom: 18px; }
@@ -2358,7 +2362,7 @@ function loadProject() {
           if (r.fg_vms_org) t.fg_vms_org = r.fg_vms_org;
           t.gates[r.gate] = {
             expected_status: r.expected_status || "",
-            actual_status: r.actual_status || "",
+            actual_status: (r.actual_status || "").replace(/^late vs\.\s*planning$/i, "Late vs planning"),
             rating: r.rating || "",
             followup_week: r.followup_week || "",
             next_update_week: r.next_update_week || "",
@@ -2630,6 +2634,12 @@ function truncCell(text, maxLen) {
   return '<span class="tooltip-wrap" title="' + safe.replace(/"/g, '&quot;') + '"><span class="tooltip-text">' + display + '</span><span class="tooltip-full">' + safe.replace(/\n/g, '<br>') + '</span></span>';
 }
 
+function engCell(name) {
+  if (!name) return '-';
+  var first = escHtml(name.trim().split(/\s+/)[0]);
+  return '<span title="' + escHtml(name) + '" style="cursor:default;">' + first + '</span>';
+}
+
 function renderTable() {
   const taskTable = document.getElementById("taskTable");
   taskTable.innerHTML = "";
@@ -2672,12 +2682,32 @@ function renderTable() {
       r.setAttribute('data-clickable', 'true');
       r.onclick = function(e) {
         if (e.target.closest('.btn-delete')) return;
+        var clickedTd = e.target.closest('td');
+        var colIdx = clickedTd ? clickedTd.cellIndex : -1;
+        var colToField = {
+          6: 'qualityEngineer', 7: 'responsibleEngineer',
+          8: 'expectedStatusDisplay', 9: 'actualStatus', 10: 'rating',
+          11: 'completionLevelDisplay', 12: 'deviationText', 13: 'followUpWeek',
+          14: 'plannedStart', 15: 'plannedEnd',
+          16: 'comments', 17: 'riskDescription', 18: 'riskLevel'
+        };
+        var targetFieldId = colToField[colIdx] || null;
         document.getElementById("itemSelect").value = item;
         document.getElementById("itemName").value = item;
         document.getElementById("qualityTask").value = task;
         loadTaskData();
         autoFillFromCriteria();
         document.querySelector('.card:nth-child(3)').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (targetFieldId) {
+          setTimeout(function() {
+            var el = document.getElementById(targetFieldId);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('field-highlight');
+              setTimeout(function() { el.classList.remove('field-highlight'); }, 3600);
+            }
+          }, 500);
+        }
       };
       r.innerHTML =
         '<td style="font-weight:600;">' + escHtml(currentProject) + '</td>' +
@@ -2686,8 +2716,8 @@ function renderTable() {
         '<td>' + escHtml(t.fg_vms_org || '-') + '</td>' +
         '<td>' + escHtml(task) + '</td>' +
         '<td><span class="badge badge-gray">' + escHtml(gate) + '</span></td>' +
-        '<td>' + escHtml(t.qe || '-') + '</td>' +
-        '<td>' + escHtml(t.resp || '-') + '</td>' +
+        '<td>' + engCell(t.qe) + '</td>' +
+        '<td>' + engCell(t.resp) + '</td>' +
         '<td>' + (hasFilled ? escHtml(gd.expected_status || '-') : '-') + '</td>' +
         '<td>' + (hasFilled ? escHtml(gd.actual_status || '-') : '-') + '</td>' +
         '<td>' + (hasFilled ? ratingBadge(gd.rating) : '-') + '</td>' +
