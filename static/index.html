@@ -1463,20 +1463,60 @@ function closeDashboard() {
 }
 
 // ===== AT-RISK =====
+// Parse a date or week string to a Date object.
+// Accepts: "YYYY-MM-DD", "YYWW" (e.g. "2604" = 2026 week 4), "YYYYWW" (e.g. "202604")
+function parseFlexDate(val) {
+  if (!val) return null;
+  const s = String(val).trim();
+  if (!s) return null;
+
+  // Standard ISO date
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const d = new Date(s); return isNaN(d) ? null : d;
+  }
+  // YYWW — e.g. "2604" = year 2026, week 04
+  if (/^\d{4}$/.test(s)) {
+    const yy = parseInt(s.slice(0,2), 10);
+    const ww = parseInt(s.slice(2,4), 10);
+    const year = yy < 50 ? 2000 + yy : 1900 + yy;
+    return isoWeekToDate(year, ww);
+  }
+  // YYYYWW — e.g. "202604"
+  if (/^\d{6}$/.test(s)) {
+    const year = parseInt(s.slice(0,4), 10);
+    const ww = parseInt(s.slice(4,6), 10);
+    return isoWeekToDate(year, ww);
+  }
+  // Try as fallback
+  const d = new Date(s); return isNaN(d) ? null : d;
+}
+
+function isoWeekToDate(year, week) {
+  // Returns the Friday (end of working week) of the given ISO week
+  const jan4 = new Date(year, 0, 4);
+  const startOfWeek1 = new Date(jan4);
+  startOfWeek1.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1);
+  const d = new Date(startOfWeek1);
+  d.setDate(d.getDate() + (week - 1) * 7 + 4); // +4 = Friday
+  return d;
+}
+
 function computeAtRisk() {
   const today = new Date(); today.setHours(0,0,0,0);
+  const oneWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
   const twoWeeks = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
   const atRisk = [];
   if (!currentProject || !store[currentProject]) return atRisk;
   Object.entries(store[currentProject]).forEach(([item, taskObj]) => {
     Object.entries(taskObj).forEach(([taskName, taskData]) => {
       Object.entries(taskData.gates || {}).forEach(([gate, gd]) => {
-        if (!gd.planned_end) return;
-        const endDate = new Date(gd.planned_end); endDate.setHours(0,0,0,0);
+        const endDate = parseFlexDate(gd.planned_end || gd.followup_week || '');
+        if (!endDate) return;
+        endDate.setHours(0,0,0,0);
         const status = (gd.actual_status || "").toLowerCase();
         if (endDate <= twoWeeks && endDate >= today && status !== 'completed' && status !== 'n/a') {
           const daysLeft = Math.round((endDate - today) / (1000 * 60 * 60 * 24));
-          atRisk.push({ item, task: taskName, gate, planned_end: gd.planned_end, actual_status: gd.actual_status || "—", daysLeft });
+          atRisk.push({ item, task: taskName, gate, planned_end: gd.planned_end || gd.followup_week, actual_status: gd.actual_status || "—", daysLeft });
         }
       });
     });
@@ -1690,34 +1730,60 @@ function generatePDF() {
 
   // ── ENGINEER WORKLOAD ─────────────────────────────────────────────
   setFill(C.white); setStroke([228, 231, 236]);
-  const engEntries = Object.entries(engWork).sort((a, b) => b[1].total - a[1].total);
-  const engH = Math.max(24, 14 + engEntries.length * 10);
+  // Build separate maps for QE and RE
+  const qeWork = {}, reWork = {};
+  Object.values(proj).forEach(itemObj => {
+    Object.values(itemObj).forEach(taskData => {
+      const gd = taskData.gates?.[currentGateValue];
+      if (!gd) return;
+      const r = (gd.rating || '').toLowerCase();
+      [['qe', taskData.qe, qeWork], ['re', taskData.resp, reWork]].forEach(([, name, map]) => {
+        const n = (name || 'Unassigned').trim();
+        if (!map[n]) map[n] = { total: 0, green: 0, yellow_c: 0, red: 0 };
+        map[n].total++;
+        if (r === 'green') map[n].green++;
+        else if (r === 'yellow') map[n].yellow_c++;
+        else if (r === 'red') map[n].red++;
+      });
+    });
+  });
+  const qeEntries = Object.entries(qeWork).sort((a, b) => b[1].total - a[1].total);
+  const reEntries = Object.entries(reWork).sort((a, b) => b[1].total - a[1].total);
+  const maxRows = Math.max(qeEntries.length, reEntries.length, 1);
+  const engH = 20 + maxRows * 10;
   doc.roundedRect(ml, y, cw, engH, 3, 3, 'FD');
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setTxt(C.muted);
-  doc.text('ENGINEER WORKLOAD · ' + currentGateValue, ml + 6, y + 7);
+  doc.text('QUALITY ENGINEER WORKLOAD · ' + currentGateValue, ml + 6, y + 7);
+  doc.text('RESPONSIBLE ENGINEER WORKLOAD · ' + currentGateValue, ml + cw/2 + 4, y + 7);
 
-  const maxTasks = Math.max(...engEntries.map(e => e[1].total), 1);
-  const engBarMax = cw - 90;
-  engEntries.forEach(([name, d], idx) => {
-    const ey = y + 12 + idx * 10;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); setTxt(C.dark);
-    const label = name.length > 22 ? name.slice(0, 20) + '…' : name;
-    doc.text(label, ml + 6, ey + 1.5);
-    const bx = ml + 58;
-    const segTotal = d.total;
-    let segX = bx;
-    [[d.green, C.green], [d.yellow_c, C.yellow], [d.red, C.red]].forEach(([cnt, col]) => {
-      if (!cnt) return;
-      const sw = (cnt / maxTasks) * engBarMax;
-      setFill(col); doc.rect(segX, ey - 3, sw, 6, 'F');
-      segX += sw;
+  const halfW = cw / 2 - 8;
+  const drawEngRows = (entries, startX) => {
+    const maxT = Math.max(...entries.map(e => e[1].total), 1);
+    entries.forEach(([name, d], idx) => {
+      const ey = y + 13 + idx * 10;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); setTxt(C.dark);
+      const lbl = name.length > 18 ? name.slice(0, 16) + '…' : name;
+      doc.text(lbl, startX, ey + 1.5);
+      const bx = startX + 40;
+      const barMax = halfW - 44;
+      let segX = bx;
+      [[d.green, C.green], [d.yellow_c, C.yellow], [d.red, C.red]].forEach(([cnt, col]) => {
+        if (!cnt) return;
+        const sw = (cnt / maxT) * barMax;
+        setFill(col); doc.rect(segX, ey - 3, sw, 6, 'F');
+        segX += sw;
+      });
+      const rem = ((d.total - d.green - d.yellow_c - d.red) / maxT) * barMax;
+      if (rem > 0) { setFill([230, 232, 236]); doc.rect(segX, ey - 3, rem, 6, 'F'); }
+      setTxt(C.muted); doc.setFontSize(6);
+      doc.text(d.total + ' task' + (d.total !== 1 ? 's' : ''), bx + barMax + 3, ey + 1.5);
     });
-    const remaining = ((segTotal - d.green - d.yellow_c - d.red) / maxTasks) * engBarMax;
-    if (remaining > 0) { setFill([230,232,236]); doc.rect(segX, ey - 3, remaining, 6, 'F'); }
-    // Task count label
-    setTxt(C.muted); doc.setFontSize(6);
-    doc.text(segTotal + ' task' + (segTotal !== 1 ? 's' : ''), bx + engBarMax + 4, ey + 1.5);
-  });
+  };
+  drawEngRows(qeEntries, ml + 6);
+  // Divider
+  setStroke([228, 231, 236]); doc.setLineWidth(0.3);
+  doc.line(ml + cw/2, y + 2, ml + cw/2, y + engH - 2);
+  drawEngRows(reEntries, ml + cw/2 + 4);
 
   y += engH + 6;
 
