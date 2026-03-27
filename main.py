@@ -310,6 +310,49 @@ def get_overdue_tasks():
     return {"overdue": overdue}
 
 
+# ---------- ALL PROJECTS ----------
+@app.get("/all-projects")
+def get_all_projects():
+    db = read_db()
+    project_ids = list(db["project_gates"].keys())
+
+    results = []
+    for pid in project_ids:
+        tasks = [t for t in db["tasks"] if t["project_id"] == pid]
+        current_gate = db["project_gates"].get(pid, "PCI")
+
+        # Only count tasks for the current gate
+        gate_tasks = [t for t in tasks if t["gate"] == current_gate]
+        total = len(gate_tasks)
+        green  = sum(1 for t in gate_tasks if t.get("rating","").lower() == "green")
+        yellow = sum(1 for t in gate_tasks if t.get("rating","").lower() == "yellow")
+        red    = sum(1 for t in gate_tasks if t.get("rating","").lower() == "red")
+
+        # Completion: tasks with actual_status == Completed across all gates up to current
+        gate_idx = GATE_ORDER.index(current_gate) if current_gate in GATE_ORDER else 0
+        done_tasks = [t for t in tasks if t["gate"] in GATE_ORDER[:gate_idx+1]
+                      and t.get("actual_status","").lower() == "completed"]
+        all_filled = [t for t in tasks if t["gate"] in GATE_ORDER[:gate_idx+1]
+                      and t.get("actual_status","")]
+        completion_pct = round(len(done_tasks) / len(all_filled) * 100) if all_filled else 0
+
+        # Deviations = active gate deviations for this project
+        dev_gates = db["gate_deviations"].get(pid, {})
+        deviations = sum(1 for v in dev_gates.values() if not v.get("reverted_at"))
+
+        results.append({
+            "project_id": pid,
+            "current_gate": current_gate,
+            "total_tasks": total,
+            "green": green, "yellow": yellow, "red": red,
+            "completion_pct": completion_pct,
+            "deviations": deviations,
+        })
+
+    results.sort(key=lambda x: x["project_id"])
+    return {"projects": results}
+
+
 # ---------- UPLOAD QTP EXCEL ----------
 COL = {
     "item": 4, "quality_task": 5, "responsible_engineer": 7,
