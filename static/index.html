@@ -1553,53 +1553,71 @@ function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('p', 'mm', 'a4');
   const pw = 210, ph = 297;
-  const ml = 14, mr = 14, cw = pw - ml - mr; // margins and content width
+  const ml = 14, mr = 14, cw = pw - ml - mr;
 
-  // --- Colour palette ---
   const C = {
-    volvoBlue:  [0, 71, 133],
-    volvoBlueLt:[230, 240, 252],
-    green:  [18, 183, 106],
-    greenLt:[212, 249, 231],
-    yellow: [247, 144, 9],
-    yellowLt:[255, 244, 214],
-    red:    [240, 68, 56],
-    redLt:  [255, 228, 226],
-    gray:   [102, 112, 133],
-    grayLt: [249, 250, 251],
-    dark:   [16, 24, 40],
-    muted:  [152, 162, 179],
-    white:  [255, 255, 255],
-    amber:  [180, 83, 9],
-    amberLt:[255, 251, 235],
+    volvoBlue:  [0, 71, 133],  volvoBlueLt:[230, 240, 252],
+    green:  [18, 183, 106],    greenLt:[212, 249, 231],
+    yellow: [247, 144, 9],     yellowLt:[255, 244, 214],
+    red:    [240, 68, 56],     redLt:  [255, 228, 226],
+    gray:   [102, 112, 133],   grayLt: [249, 250, 251],
+    dark:   [16, 24, 40],      muted:  [152, 162, 179],
+    white:  [255, 255, 255],   amber:  [180, 83, 9],
   };
 
   function setFill(rgb) { doc.setFillColor(rgb[0], rgb[1], rgb[2]); }
   function setStroke(rgb) { doc.setDrawColor(rgb[0], rgb[1], rgb[2]); }
   function setTxt(rgb) { doc.setTextColor(rgb[0], rgb[1], rgb[2]); }
+  // Strip non-Latin-1 characters to prevent garbled text in jsPDF standard fonts
+  function ascii(s) {
+    return (s || '')
+      .replace(/[\u2014\u2013]/g, '-')
+      .replace(/\u2192/g, '->')
+      .replace(/[\u00B7\u22C5\u2022]/g, '.')
+      .replace(/\u2026/g, '...')
+      .replace(/[\u25CF\u2713\u2714]/g, '*')
+      .replace(/\u26A0/g, '!')
+      .replace(/[\u2715\u2716\u2717]/g, 'X')
+      .replace(/[^\x00-\xFF]/g, '?');
+  }
+
+  // Draw pie/donut using tessellated triangles (works with all jsPDF versions)
+  function drawPie(cx, cy, r, slices, donut) {
+    const total = slices.reduce((s, x) => s + x.v, 0);
+    if (!total) { setFill(C.grayLt); doc.circle(cx, cy, r, 'F'); return; }
+    let a0 = -Math.PI / 2;
+    slices.forEach(sl => {
+      if (!sl.v) return;
+      const sweep = (sl.v / total) * Math.PI * 2;
+      const steps = Math.max(3, Math.ceil(sweep * 14));
+      setFill(sl.c);
+      for (let i = 0; i < steps; i++) {
+        const a1 = a0 + sweep * i / steps;
+        const a2 = a0 + sweep * (i + 1) / steps;
+        doc.triangle(cx, cy, cx + r * Math.cos(a1), cy + r * Math.sin(a1), cx + r * Math.cos(a2), cy + r * Math.sin(a2), 'F');
+      }
+      a0 += sweep;
+    });
+    if (donut) { setFill(C.white); doc.circle(cx, cy, r * 0.52, 'F'); }
+  }
 
   let y = 0;
 
-  // ── HEADER BAND ──────────────────────────────────────────────────
+  // HEADER BAND
   setFill(C.volvoBlue); doc.rect(0, 0, pw, 32, 'F');
-  // Diagonal accent stripe
-  setFill([0, 55, 105]); doc.triangle(pw-40, 0, pw, 0, pw, 32, 'F');
-
+  setFill([0, 55, 105]); doc.triangle(pw - 40, 0, pw, 0, pw, 32, 'F');
   setTxt(C.white); doc.setFont('helvetica', 'bold'); doc.setFontSize(17);
   doc.text('QTP Gate Status Report', ml, 13);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-  doc.text('Project: ' + currentProject, ml, 21);
-  doc.text('Current Gate: ' + currentGateValue, ml, 27);
+  doc.text('Project: ' + (currentProject || '-'), ml, 21);
+  doc.text('Current Gate: ' + (currentGateValue || '-'), ml, 27);
   doc.text('Generated: ' + new Date().toLocaleDateString('en-GB'), pw - mr, 27, { align: 'right' });
-  // VOLVO text top-right
   doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
   doc.text('VOLVO', pw - mr, 12, { align: 'right' });
-
   y = 38;
 
-  // ── GATE TIMELINE ────────────────────────────────────────────────
+  // GATE TIMELINE
   setFill(C.grayLt); doc.roundedRect(ml, y, cw, 18, 2, 2, 'F');
-
   const states = gateStates[currentProject] || {};
   const dotR = 4.5, slotW = cw / gateOrder.length;
   gateOrder.forEach((g, i) => {
@@ -1608,53 +1626,52 @@ function generatePDF() {
     const isDeviated = states[g] === 'deviated';
     const isCompleted = i < projectProgressGateIdx;
     const isCurrent = g === currentGateValue;
-
-    // Line to next
     if (i < gateOrder.length - 1) {
       const nx = ml + slotW * (i + 1) + slotW / 2;
       doc.setLineWidth(1.2);
       setStroke(isCompleted ? C.volvoBlue : C.muted);
       doc.line(cx + dotR, cy, nx - dotR, cy);
     }
-    // Dot
     setStroke(isCurrent ? C.volvoBlue : isDeviated ? C.red : isCompleted ? C.volvoBlue : C.muted);
     doc.setLineWidth(isCurrent ? 1.5 : 1);
-    if (isDeviated) { setFill(C.redLt); }
-    else if (isCurrent) { setFill(C.volvoBlue); }
-    else if (isCompleted) { setFill(C.volvoBlue); }
-    else { setFill(C.white); }
+    if (isDeviated) setFill(C.redLt);
+    else if (isCurrent || isCompleted) setFill(C.volvoBlue);
+    else setFill(C.white);
     doc.circle(cx, cy, dotR, 'FD');
-
-    // Label inside dot
     doc.setFont('helvetica', isCurrent ? 'bold' : 'normal');
     doc.setFontSize(5);
     setTxt(isCurrent || isCompleted ? C.white : isDeviated ? C.red : C.muted);
     doc.text(g, cx, cy + 1.5, { align: 'center' });
-
-    // Strikethrough for deviated
     if (isDeviated) {
       setStroke(C.red); doc.setLineWidth(0.5);
       doc.line(cx - dotR, cy, cx + dotR, cy);
-      doc.setLineWidth(0.3); doc.setFont('helvetica', 'normal'); doc.setFontSize(5);
-      setTxt(C.red); doc.text('skip', cx, cy + dotR + 2.5, { align: 'center' });
+      setTxt(C.red); doc.setFontSize(5);
+      doc.text('skip', cx, cy + dotR + 2.5, { align: 'center' });
     }
   });
-  // Legend
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(6); setTxt(C.muted);
-  doc.text('● Completed   ● Current   ● Upcoming   ✕ Skipped', ml + 2, y + 16.5);
-
+  setTxt(C.muted); doc.setFont('helvetica', 'normal'); doc.setFontSize(6);
+  doc.text('Filled=Completed  Bold=Current  Empty=Upcoming  strike=Skipped', ml + 2, y + 16.5);
   y += 24;
 
-  // ── TWO-COLUMN: RAG + STATUS ──────────────────────────────────────
-  const colW = (cw - 6) / 2;
-  // Gather data
+  // GATHER ALL DATA
   const proj = store[currentProject] || {};
   let green = 0, yellow = 0, red = 0, na = 0, gateTotal = 0;
   const statusCounts = {};
-  const engWork = {}; // { name: { total, green, yellow, red } }
+  const qeWork = {}, reWork = {};
+  const gateIdx = gateOrder.indexOf(currentGateValue);
+  const relevantGates = gateOrder.slice(0, Math.max(gateIdx + 1, 1));
+  let totalGateTasks = 0, completedGateTasks = 0;
 
   Object.values(proj).forEach(itemObj => {
     Object.values(itemObj).forEach(taskData => {
+      // Multi-gate completion count (gates up to current)
+      relevantGates.forEach(g => {
+        const gd2 = taskData.gates?.[g];
+        if (!gd2 || !gd2.actual_status) return;
+        totalGateTasks++;
+        if ((gd2.actual_status || '').toLowerCase() === 'completed') completedGateTasks++;
+      });
+      // Current gate stats for charts
       const gd = taskData.gates?.[currentGateValue];
       if (!gd) return;
       gateTotal++;
@@ -1665,78 +1682,6 @@ function generatePDF() {
       else na++;
       const st = gd.actual_status || 'Not set';
       statusCounts[st] = (statusCounts[st] || 0) + 1;
-      const qe = taskData.qe || '—';
-      if (!engWork[qe]) engWork[qe] = { total: 0, green: 0, yellow: 0, red: 0, yellow_c: 0 };
-      engWork[qe].total++;
-      if (r === 'green') engWork[qe].green++;
-      else if (r === 'yellow') engWork[qe].yellow_c++;
-      else if (r === 'red') engWork[qe].red++;
-    });
-  });
-
-  // RAG Card (left)
-  setFill(C.white); setStroke([228, 231, 236]);
-  doc.setLineWidth(0.3); doc.roundedRect(ml, y, colW, 52, 3, 3, 'FD');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setTxt(C.muted);
-  doc.text('RATING SUMMARY · ' + currentGateValue, ml + 6, y + 7);
-
-  const ragData = [
-    { label: 'Green', count: green, color: C.green, lt: C.greenLt },
-    { label: 'Yellow', count: yellow, color: C.yellow, lt: C.yellowLt },
-    { label: 'Red', count: red, color: C.red, lt: C.redLt },
-    { label: 'N/A', count: na, color: C.muted, lt: C.grayLt },
-  ];
-  const barMaxW = colW - 50;
-  ragData.forEach((item, idx) => {
-    const by = y + 13 + idx * 9;
-    const pct = gateTotal > 0 ? item.count / gateTotal : 0;
-    const bw = Math.max(pct * barMaxW, item.count > 0 ? 2 : 0);
-    setFill(item.lt); doc.rect(ml + 6, by - 3.5, barMaxW, 7, 'F');
-    setFill(item.color); doc.rect(ml + 6, by - 3.5, bw, 7, 'F');
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); setTxt(C.dark);
-    doc.text(item.label, ml + 6 + barMaxW + 3, by + 1.5);
-    doc.setFont('helvetica', 'bold');
-    doc.text(String(item.count), ml + 6 + barMaxW + 22, by + 1.5);
-  });
-  setTxt(C.muted); doc.setFont('helvetica', 'normal'); doc.setFontSize(6);
-  doc.text(gateTotal + ' tasks in gate', ml + 6, y + 49);
-
-  // Status Card (right)
-  const rx = ml + colW + 6;
-  setFill(C.white); setStroke([228, 231, 236]);
-  doc.roundedRect(rx, y, colW, 52, 3, 3, 'FD');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setTxt(C.muted);
-  doc.text('STATUS DISTRIBUTION · ' + currentGateValue, rx + 6, y + 7);
-
-  const statusColors = { 'Completed': C.green, 'In Progress': C.volvoBlue, 'Late': C.red, 'Planned': C.yellow, 'Started': [100, 150, 220], 'N/A': C.muted };
-  const statusEntries = Object.entries(statusCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const stBarMax = colW - 50;
-  statusEntries.forEach(([st, cnt], idx) => {
-    const by = y + 13 + idx * 9;
-    const pct = gateTotal > 0 ? cnt / gateTotal : 0;
-    const bw = Math.max(pct * stBarMax, cnt > 0 ? 2 : 0);
-    const col = statusColors[st] || C.gray;
-    setFill([col[0], col[1], col[2], 0.15].slice(0,3).map(v => Math.min(255, v + 180)));
-    doc.rect(rx + 6, by - 3.5, stBarMax, 7, 'F');
-    setFill(col); doc.rect(rx + 6, by - 3.5, bw, 7, 'F');
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); setTxt(C.dark);
-    const label = st.length > 14 ? st.slice(0, 12) + '…' : st;
-    doc.text(label, rx + 6 + stBarMax + 3, by + 1.5);
-    doc.setFont('helvetica', 'bold');
-    doc.text(String(cnt), rx + 6 + stBarMax + 26, by + 1.5);
-  });
-
-  y += 58;
-
-  // ── ENGINEER WORKLOAD ─────────────────────────────────────────────
-  setFill(C.white); setStroke([228, 231, 236]);
-  // Build separate maps for QE and RE
-  const qeWork = {}, reWork = {};
-  Object.values(proj).forEach(itemObj => {
-    Object.values(itemObj).forEach(taskData => {
-      const gd = taskData.gates?.[currentGateValue];
-      if (!gd) return;
-      const r = (gd.rating || '').toLowerCase();
       [['qe', taskData.qe, qeWork], ['re', taskData.resp, reWork]].forEach(([, name, map]) => {
         const n = (name || 'Unassigned').trim();
         if (!map[n]) map[n] = { total: 0, green: 0, yellow_c: 0, red: 0 };
@@ -1747,26 +1692,104 @@ function generatePDF() {
       });
     });
   });
+
+  const completionPct = totalGateTasks > 0 ? Math.round(completedGateTasks / totalGateTasks * 100) : 0;
+
+  // THREE-COLUMN ROW: Completion% | RAG Donut | Status Distribution
+  const rowH = 58;
+  const col3W = (cw - 8) / 3;
+
+  // Col 1: Overall Completion
+  setFill(C.white); setStroke([228, 231, 236]); doc.setLineWidth(0.3);
+  doc.roundedRect(ml, y, col3W, rowH, 3, 3, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setTxt(C.muted);
+  doc.text('OVERALL COMPLETION', ml + 6, y + 8);
+  const pctColor = completionPct >= 80 ? C.green : completionPct >= 50 ? C.yellow : C.red;
+  setTxt(pctColor); doc.setFont('helvetica', 'bold'); doc.setFontSize(28);
+  doc.text(completionPct + '%', ml + col3W / 2, y + 31, { align: 'center' });
+  setTxt(C.muted); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+  doc.text(completedGateTasks + ' / ' + totalGateTasks + ' tasks', ml + col3W / 2, y + 38, { align: 'center' });
+  const bx = ml + 6, bw2 = col3W - 12, by2 = y + 43;
+  setFill([230, 232, 236]); doc.roundedRect(bx, by2, bw2, 5, 1.5, 1.5, 'F');
+  if (completionPct > 0) { setFill(pctColor); doc.roundedRect(bx, by2, Math.max(bw2 * completionPct / 100, 2), 5, 1.5, 1.5, 'F'); }
+  setTxt(C.muted); doc.setFontSize(6);
+  doc.text('Gates: ' + relevantGates.join(', '), ml + col3W / 2, y + 54, { align: 'center' });
+
+  // Col 2: RAG Donut Chart
+  const c2x = ml + col3W + 4;
+  setFill(C.white); setStroke([228, 231, 236]);
+  doc.roundedRect(c2x, y, col3W, rowH, 3, 3, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setTxt(C.muted);
+  doc.text('GATE RAG - ' + currentGateValue, c2x + 6, y + 8);
+  const dcx = c2x + col3W / 2, dcy = y + 30, dr = 16;
+  drawPie(dcx, dcy, dr, [
+    { v: green,  c: C.green  },
+    { v: yellow, c: C.yellow },
+    { v: red,    c: C.red    },
+    { v: na,     c: C.muted  },
+  ], true);
+  setTxt(C.dark); doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+  doc.text(String(gateTotal), dcx, dcy + 2, { align: 'center' });
+  setTxt(C.muted); doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5);
+  doc.text('tasks', dcx, dcy + 6, { align: 'center' });
+  // Legend
+  const legItems = [['Green', green, C.green], ['Yellow', yellow, C.yellow], ['Red', red, C.red], ['N/A', na, C.muted]];
+  legItems.forEach(([lbl, cnt, col], i) => {
+    const lx = c2x + 4 + (i % 2) * (col3W / 2);
+    const ly = y + 49 + Math.floor(i / 2) * 5.5;
+    setFill(col); doc.roundedRect(lx, ly - 2.5, 3.5, 3.5, 0.5, 0.5, 'F');
+    setTxt(C.dark); doc.setFontSize(6); doc.setFont('helvetica', 'normal');
+    doc.text(lbl + ': ' + cnt, lx + 5, ly + 0.5);
+  });
+
+  // Col 3: Status Distribution
+  const c3x = c2x + col3W + 4;
+  setFill(C.white); setStroke([228, 231, 236]);
+  doc.roundedRect(c3x, y, col3W, rowH, 3, 3, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setTxt(C.muted);
+  doc.text('STATUS - ' + currentGateValue, c3x + 6, y + 8);
+  const statusColors = { 'Completed': C.green, 'In Progress': C.volvoBlue, 'Late': C.red, 'Planned': C.yellow, 'Started': [100, 150, 220], 'N/A': C.muted };
+  const statusEntries = Object.entries(statusCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const stBarMax = col3W - 42;
+  statusEntries.forEach(([st, cnt], idx) => {
+    const by3 = y + 14 + idx * 8;
+    const pct = gateTotal > 0 ? cnt / gateTotal : 0;
+    const bw3 = Math.max(pct * stBarMax, cnt > 0 ? 2 : 0);
+    const stCol = statusColors[st] || C.gray;
+    const ltCol = stCol.map(v => Math.min(255, v + 160));
+    setFill(ltCol); doc.rect(c3x + 6, by3 - 3.5, stBarMax, 7, 'F');
+    setFill(stCol); doc.rect(c3x + 6, by3 - 3.5, bw3, 7, 'F');
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); setTxt(C.dark);
+    const stLabel = ascii(st.length > 11 ? st.slice(0, 9) + '..' : st);
+    doc.text(stLabel, c3x + 6 + stBarMax + 3, by3 + 1.5);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(cnt), c3x + 6 + stBarMax + 23, by3 + 1.5);
+  });
+  setTxt(C.muted); doc.setFont('helvetica', 'normal'); doc.setFontSize(6);
+  doc.text(gateTotal + ' tasks in gate', c3x + 6, y + rowH - 4);
+
+  y += rowH + 6;
+
+  // ENGINEER WORKLOAD (QE left | RE right)
   const qeEntries = Object.entries(qeWork).sort((a, b) => b[1].total - a[1].total);
   const reEntries = Object.entries(reWork).sort((a, b) => b[1].total - a[1].total);
   const maxRows = Math.max(qeEntries.length, reEntries.length, 1);
-  const engH = 20 + maxRows * 10;
-  doc.roundedRect(ml, y, cw, engH, 3, 3, 'FD');
+  const engH = 18 + maxRows * 9;
+  setFill(C.white); setStroke([228, 231, 236]);
+  doc.setLineWidth(0.3); doc.roundedRect(ml, y, cw, engH, 3, 3, 'FD');
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setTxt(C.muted);
-  doc.text('QUALITY ENGINEER WORKLOAD · ' + currentGateValue, ml + 6, y + 7);
-  doc.text('RESPONSIBLE ENGINEER WORKLOAD · ' + currentGateValue, ml + cw/2 + 4, y + 7);
-
+  doc.text('QUALITY ENGINEER WORKLOAD - ' + currentGateValue, ml + 6, y + 7);
+  doc.text('RESPONSIBLE ENGINEER WORKLOAD - ' + currentGateValue, ml + cw / 2 + 4, y + 7);
   const halfW = cw / 2 - 8;
   const drawEngRows = (entries, startX) => {
     const maxT = Math.max(...entries.map(e => e[1].total), 1);
     entries.forEach(([name, d], idx) => {
-      const ey = y + 13 + idx * 10;
+      const ey = y + 12 + idx * 9;
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7); setTxt(C.dark);
-      const lbl = name.length > 18 ? name.slice(0, 16) + '…' : name;
+      const lbl = ascii(name.length > 17 ? name.slice(0, 15) + '..' : name);
       doc.text(lbl, startX, ey + 1.5);
-      const bx = startX + 40;
-      const barMax = halfW - 44;
-      let segX = bx;
+      const bx2 = startX + 38, barMax = halfW - 42;
+      let segX = bx2;
       [[d.green, C.green], [d.yellow_c, C.yellow], [d.red, C.red]].forEach(([cnt, col]) => {
         if (!cnt) return;
         const sw = (cnt / maxT) * barMax;
@@ -1776,106 +1799,101 @@ function generatePDF() {
       const rem = ((d.total - d.green - d.yellow_c - d.red) / maxT) * barMax;
       if (rem > 0) { setFill([230, 232, 236]); doc.rect(segX, ey - 3, rem, 6, 'F'); }
       setTxt(C.muted); doc.setFontSize(6);
-      doc.text(d.total + ' task' + (d.total !== 1 ? 's' : ''), bx + barMax + 3, ey + 1.5);
+      doc.text(d.total + (d.total !== 1 ? 'T' : 'T'), bx2 + barMax + 3, ey + 1.5);
     });
   };
   drawEngRows(qeEntries, ml + 6);
-  // Divider
   setStroke([228, 231, 236]); doc.setLineWidth(0.3);
-  doc.line(ml + cw/2, y + 2, ml + cw/2, y + engH - 2);
-  drawEngRows(reEntries, ml + cw/2 + 4);
-
+  doc.line(ml + cw / 2, y + 2, ml + cw / 2, y + engH - 2);
+  drawEngRows(reEntries, ml + cw / 2 + 4);
   y += engH + 6;
 
-  // ── DEVIATIONS + AT-RISK (side by side if space) ─────────────────
+  // DEVIATIONS + AT-RISK
   const devGates = Object.keys(states);
   const atRiskTasks = computeAtRisk();
   const hasDevs = devGates.length > 0;
   const hasAtRisk = atRiskTasks.length > 0;
-
   if (hasDevs || hasAtRisk) {
-    const hColW = hasDevs && hasAtRisk ? (cw - 6) / 2 : cw;
+    if (y + 30 > ph - 20) { doc.addPage(); y = 14; }
+    const hColW2 = hasDevs && hasAtRisk ? (cw - 6) / 2 : cw;
     let secH = 0;
-
     if (hasDevs) {
       secH = Math.max(secH, 14 + devGates.length * 8);
       setFill([255, 248, 240]); setStroke([247, 144, 9]);
-      doc.roundedRect(ml, y, hColW, secH, 3, 3, 'FD');
+      doc.roundedRect(ml, y, hColW2, secH, 3, 3, 'FD');
       doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setTxt(C.amber);
-      doc.text('⚠  GATE DEVIATIONS', ml + 6, y + 7);
+      doc.text('! GATE DEVIATIONS', ml + 6, y + 7);
       doc.setFont('helvetica', 'normal'); setTxt(C.dark);
       devGates.forEach((g, i) => {
-        const devInfo = (gateStates[currentProject] || {})[g];
         doc.setFontSize(7);
-        doc.text('• Gate ' + g + ' — bypassed', ml + 8, y + 13 + i * 8);
+        doc.text('* Gate ' + g + ' - bypassed', ml + 8, y + 13 + i * 8);
       });
     }
-
     if (hasAtRisk) {
-      const rx2 = hasDevs ? ml + hColW + 6 : ml;
+      const rx2 = hasDevs ? ml + hColW2 + 6 : ml;
       secH = Math.max(secH, 14 + Math.min(atRiskTasks.length, 5) * 8);
       setFill([255, 251, 235]); setStroke([252, 196, 25]);
-      doc.roundedRect(rx2, y, hColW, secH, 3, 3, 'FD');
+      doc.roundedRect(rx2, y, hColW2, secH, 3, 3, 'FD');
       doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setTxt(C.amber);
-      doc.text('⚠  AT-RISK TASKS (next 14 days)', rx2 + 6, y + 7);
+      doc.text('! AT-RISK TASKS', rx2 + 6, y + 7);
       doc.setFont('helvetica', 'normal'); setTxt(C.dark);
       atRiskTasks.slice(0, 5).forEach((t, i) => {
         doc.setFontSize(7);
-        const label = (t.task.length > 30 ? t.task.slice(0, 28) + '…' : t.task) + ' [' + t.gate + '] — ' + (t.daysLeft === 0 ? 'today' : t.daysLeft + 'd');
-        doc.text('• ' + label, rx2 + 8, y + 13 + i * 8);
+        const label = ascii((t.task.length > 32 ? t.task.slice(0, 30) + '..' : t.task) + ' [' + t.gate + '] - ' + (t.daysLeft === 0 ? 'today' : t.daysLeft + 'd'));
+        doc.text('* ' + label, rx2 + 8, y + 13 + i * 8);
       });
     }
-
     y += secH + 6;
   }
 
-  // ── AUDIT TRAIL (last 5) ──────────────────────────────────────────
-  if (y < ph - 50) {
+  // AUDIT TRAIL
+  function addFooter() {
+    setFill(C.volvoBlue); doc.rect(0, ph - 10, pw, 10, 'F');
+    setTxt(C.white); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+    doc.text('QTP Digitization | Volvo TTI Quality Task Plan', ml, ph - 4);
+    doc.text('CONFIDENTIAL - For internal use only', pw - mr, ph - 4, { align: 'right' });
+  }
+  const doSave = () => {
+    addFooter();
+    doc.save('QTP_Report_' + (currentProject || 'Project') + '_' + (currentGateValue || 'Gate') + '.pdf');
+  };
+
+  if (y < ph - 38) {
     fetch("/audit-log/" + encodeURIComponent(currentProject))
       .then(r => r.json())
       .then(data => {
         const logs = (data.logs || []).slice(0, 5);
-        const auditH = 14 + logs.length * 9;
-        setFill(C.grayLt); setStroke([228,231,236]);
-        doc.roundedRect(ml, y, cw, auditH, 3, 3, 'FD');
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setTxt(C.muted);
-        doc.text('AUDIT TRAIL · LAST ' + logs.length + ' ACTIONS', ml + 6, y + 7);
-        logs.forEach((e, i) => {
-          const ay = y + 12 + i * 9;
-          const d = new Date(e.changed_at);
-          const ts = d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(7); setTxt(C.muted);
-          doc.text(ts, ml + 6, ay);
-          setTxt(C.dark);
-          const det = e.field_changed + ': ' + (e.old_value || '—') + ' → ' + (e.new_value || '—');
-          doc.text(det, ml + 36, ay);
-          setTxt(C.volvoBlue);
-          doc.text(e.changed_by, ml + cw - 4, ay, { align: 'right' });
-        });
-        // Footer
-        setFill(C.volvoBlue); doc.rect(0, ph - 10, pw, 10, 'F');
-        setTxt(C.white); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-        doc.text('QTP Digitization · Volvo TTI Quality Task Plan', ml, ph - 4);
-        doc.text('CONFIDENTIAL — For internal use only', pw - mr, ph - 4, { align: 'right' });
-        doc.save('QTP_Report_' + currentProject + '_' + currentGateValue + '.pdf');
+        if (logs.length > 0) {
+          const auditH = 14 + logs.length * 9;
+          if (y + auditH < ph - 12) {
+            setFill(C.grayLt); setStroke([228, 231, 236]);
+            doc.roundedRect(ml, y, cw, auditH, 3, 3, 'FD');
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setTxt(C.muted);
+            doc.text('AUDIT TRAIL - LAST ' + logs.length + ' ACTIONS', ml + 6, y + 7);
+            logs.forEach((e, i) => {
+              const ay = y + 12 + i * 9;
+              const d = new Date(e.changed_at);
+              const ts = d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(7); setTxt(C.muted);
+              doc.text(ts, ml + 6, ay);
+              setTxt(C.dark);
+              const cleanOld = ascii(String(e.old_value || '-')).slice(0, 20);
+              const cleanNew = ascii(String(e.new_value || '-')).slice(0, 20);
+              const cleanField = ascii(String(e.field_changed || '')).slice(0, 18);
+              const det = cleanField + ': ' + cleanOld + ' -> ' + cleanNew;
+              doc.text(det.slice(0, 58), ml + 38, ay);
+              setTxt(C.volvoBlue);
+              doc.text(ascii(String(e.changed_by || '')).slice(0, 20), ml + cw - 4, ay, { align: 'right' });
+            });
+          }
+        }
+        doSave();
       })
-      .catch(() => {
-        // Footer without audit
-        setFill(C.volvoBlue); doc.rect(0, ph - 10, pw, 10, 'F');
-        setTxt(C.white); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-        doc.text('QTP Digitization · Volvo TTI Quality Task Plan', ml, ph - 4);
-        doc.text('CONFIDENTIAL — For internal use only', pw - mr, ph - 4, { align: 'right' });
-        doc.save('QTP_Report_' + currentProject + '_' + currentGateValue + '.pdf');
-      });
+      .catch(() => doSave());
   } else {
-    // Footer
-    setFill(C.volvoBlue); doc.rect(0, ph - 10, pw, 10, 'F');
-    setTxt(C.white); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-    doc.text('QTP Digitization · Volvo TTI Quality Task Plan', ml, ph - 4);
-    doc.text('CONFIDENTIAL — For internal use only', pw - mr, ph - 4, { align: 'right' });
-    doc.save('QTP_Report_' + currentProject + '_' + currentGateValue + '.pdf');
+    doSave();
   }
-  showToast("Generating PDF…");
+  showToast("Generating PDF...");
 }
 
 function applyRagFilter(gate, type) {
