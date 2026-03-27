@@ -27,17 +27,34 @@ DATA_FILE = "qtp_data.json"
 # ---- JSON DB helpers ----
 
 def read_db():
+    empty = {"tasks": [], "engineers": [], "project_gates": {}, "gate_deviations": {}, "audit_log": []}
     if not os.path.exists(DATA_FILE):
-        return {"tasks": [], "engineers": [], "project_gates": {}, "gate_deviations": {}, "audit_log": []}
-    with open(DATA_FILE, "r") as f:
-        db = json.load(f)
+        return empty
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+        if not content:
+            return empty
+        db = json.loads(content)
+    except (json.JSONDecodeError, ValueError):
+        # File is corrupt - back it up and start fresh
+        import shutil
+        try:
+            shutil.copy(DATA_FILE, DATA_FILE + ".bak")
+        except Exception:
+            pass
+        db = empty
     db.setdefault("gate_deviations", {})
     db.setdefault("audit_log", [])
     return db
 
 def write_db(db):
-    with open(DATA_FILE, "w") as f:
+    import tempfile
+    dir_name = os.path.dirname(os.path.abspath(DATA_FILE)) or '.'
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.tmp', dir=dir_name, delete=False, encoding='utf-8') as f:
         json.dump(db, f, indent=2)
+        tmp_path = f.name
+    os.replace(tmp_path, DATA_FILE)
 
 
 # ---- Models ----
